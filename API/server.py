@@ -4,7 +4,7 @@ from dotenv import load_dotenv
 import os
 
 # Server imports
-from dbconn import db_test_conn
+from dbconn import db_test_conn, db_setup
 
 # Load environment variables
 load_dotenv() # Get .env file variables
@@ -18,6 +18,11 @@ app = Flask(__name__)
 def hello_world():
     version = db_test_conn()
     return {"message": version}
+
+@app.route("/setup-db")
+def setup_db():
+    result = "disabled" # db_setup()
+    return {"message": result}
 
 # If we're in a local build, run the server this way
 if LOCAL:

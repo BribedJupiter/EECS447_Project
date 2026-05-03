@@ -10,7 +10,11 @@ export function UserInfo() {
 }
 
 export function UpcomingMeetings() {
-  
+  return (
+    <View>
+      
+    </View>
+  );
 }
 
 export function SignUp() {
@@ -43,7 +47,8 @@ export default function Index() {
         alignItems: "center",
       }}
     >
-      <Login />
+
+    <UpcomingMeetings />
     </View>
   );
 }
