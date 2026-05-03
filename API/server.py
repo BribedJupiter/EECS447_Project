@@ -20,6 +20,7 @@ CORS(app, resources={r"/*": {
         "http://localhost:8081",
         "http://127.0.0.1:8081",
         "https://bribedjupiter.github.io/EECS447_Project"
+        "https://bribedjupiter.github.io"
     ]
 }})
 
