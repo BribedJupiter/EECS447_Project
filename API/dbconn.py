@@ -28,10 +28,10 @@ def db_connect():
     return conn
 
 # queryFunc must be a function that takes 
-def db_run_query(queryFunc):
+def db_run_query(queryFunc, *args, **kwargs):
     try:
         conn = db_connect()
-        return queryFunc(conn)
+        return queryFunc(conn, *args, **kwargs)
     except Exception as e:
         print(f"Database error: {e}")
         raise
@@ -41,6 +41,37 @@ def db_run_query(queryFunc):
 
 def db_test_conn():
     return db_run_query(db_get_version)
+
+def db_get_user(user_id):
+    return db_run_query(db_get_user_data, user_id)
+
+def db_get_user_data(conn, user_id):
+    """Retrieve the data matching a particular user_id."""
+    cur = conn.cursor()
+    params = [user_id]
+    cur.execute(
+        "SELECT * FROM User WHERE id=%s", 
+        params
+    )
+    result = cur.fetchall()
+    cur.close()
+    return result
+
+def db_put_user(name, email, phone):
+    return db_run_query(db_put_user_data, name, email, phone)
+
+def db_put_user_data(conn, name, email, phone):
+    """Insert a user's data into the database, creating a new user."""
+    cur = conn.cursor()
+    cur.execute(
+        "INSERT INTO User (name, email, phone) VALUES (%s, %s, %s)",
+        (name, email, phone) 
+    ) # id is automatically created using MySQL's AUTO_INCREMENT
+    conn.commit()
+
+    # Return back the new user_id
+    user_id = cur.lastrowid
+    return user_id
 
 def db_setup():
     return db_run_query(db_setup_tables)
