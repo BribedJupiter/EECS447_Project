@@ -1,7 +1,13 @@
 # Learn more https://docs.github.com/en/get-started/getting-started-with-git/ignoring-files
 
+# Environment
+.env
+
 # dependencies
 node_modules/
+
+# VS Code
+.vscode/
 
 # Expo
 .expo/

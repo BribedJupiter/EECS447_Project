@@ -1,4 +1,37 @@
-import { Text, View } from "react-native";
+import { useState } from "react";
+import { Pressable, TextInput, View } from "react-native";
+
+export function MeetingScheduler() {
+
+}
+
+export function UserInfo() {
+
+}
+
+export function UpcomingMeetings() {
+  
+}
+
+export function SignUp() {
+
+}
+
+export function Login() {
+  // Going for speed of development here, not security
+  const [usernameText, setUsernameText] = useState("Username");
+  const [passwordText, setPasswordText] = useState("Password");
+
+  return (
+    <View>
+      <TextInput onChangeText={setUsernameText} value={usernameText}></TextInput>
+      <TextInput onChangeText={setPasswordText} value={passwordText}></TextInput>
+      <Pressable onPress={() => {
+        console.log("")
+      }}></Pressable>
+    </View>
+  );
+}
 
 export default function Index() {
   return (
@@ -9,7 +42,7 @@ export default function Index() {
         alignItems: "center",
       }}
     >
-      <Text>Edit app/index.tsx to edit this screen.</Text>
+      <Login />
     </View>
   );
 }
