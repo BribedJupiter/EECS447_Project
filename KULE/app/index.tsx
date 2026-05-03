@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Pressable, TextInput, View } from "react-native";
+import { Pressable, TextInput, View, Text } from "react-native";
 
 export function MeetingScheduler() {
 
@@ -24,6 +24,7 @@ export function Login() {
 
   return (
     <View>
+      <Text>Login:</Text>
       <TextInput onChangeText={setUsernameText} value={usernameText}></TextInput>
       <TextInput onChangeText={setPasswordText} value={passwordText}></TextInput>
       <Pressable onPress={() => {
