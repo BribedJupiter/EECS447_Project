@@ -55,7 +55,7 @@ def db_get_user_data(conn, user_id):
     )
     result = cur.fetchall()
     cur.close()
-    return result
+    return result[0]
 
 def db_get_user_by_username(username):
     user_id = db_run_query(db_get_user_id_by_username, username)
@@ -78,7 +78,8 @@ def db_get_user_id_by_username(conn, username):
         return result[0] # return the user id
 
 def db_put_user(username, name, email, phone):
-    return db_run_query(db_put_user_data, username, name, email, phone)
+    user_id = db_run_query(db_put_user_data, username, name, email, phone)
+    return db_run_query(db_get_user_data, user_id)
 
 def db_put_user_data(conn, username, name, email, phone):
     """Insert a user's data into the database, creating a new user."""

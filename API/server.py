@@ -1,5 +1,5 @@
 # System imports
-from flask import Flask, request
+from flask import Flask, request, jsonify
 from flask_cors import CORS
 from dotenv import load_dotenv
 import os
@@ -38,24 +38,44 @@ def setup_db():
 @app.route("/user/<int:user_id>")
 def get_user(user_id):
     result = db_get_user(user_id)
-    return {"user": result}, 200
+    print(result)
+    return jsonify({
+            "id": result[0],
+            "username": result[1],
+            "name": result[2],
+            "email": result[3],
+            "phone": result[4],
+    }), 200
 
 @app.route("/user/<string:username>")
 def get_user_username(username):
     result = db_get_user_by_username(username)
     if result is None:
         return {"error":"user not found"}, 404
-    return {"user": result}, 200
+    print(result)
+    return jsonify({
+        "id": result[0],
+        "username": result[1],
+        "name": result[2],
+        "email": result[3],
+        "phone": result[4],
+    }), 200
 
 @app.route("/user", methods=["PUT"])
 def put_user():
     try:
         data = request.get_json() or {}
-        user_id = db_put_user(data.get("username"), data.get("name"), data.get("email"), data.get("phone"))
-        if user_id is None:
+        result = db_put_user(data.get("username"), data.get("name"), data.get("email"), data.get("phone"))
+        if result is None:
             return {"error": "failed to insert row"}, 500
         else:
-            return {"user_id":user_id}, 200
+            return jsonify({
+                "id": result[0],
+                "username": result[1],
+                "name": result[2],
+                "email": result[3],
+                "phone": result[4],
+            }), 200
     except Exception as e:
         print("ERROR:", e)
         return {"error": "unknown"}, 500

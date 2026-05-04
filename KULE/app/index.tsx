@@ -9,11 +9,11 @@ const DEFAULT_NAME = "Enter your name";
 const DEFAULT_EMAIL = "Enter your email";
 const DEFAULT_PHONE_TEXT = "Enter your phone number (no spaces or hyphens)";
 
-interface props {
+interface Props {
   setMode: (mode: string) => void;
 }
 
-function Register({setMode}: props) {
+function Register({setMode}: Props) {
   const [usernameText, setUsernameText] = useState(DEFAULT_USERNAME);
   const [nameText, setNameText] = useState(DEFAULT_NAME);
   const [emailText, setEmailText] = useState(DEFAULT_EMAIL);
@@ -48,19 +48,19 @@ function Register({setMode}: props) {
             setErrorText("That username is taken, try another.");
           } else {
             // The user does not exist
-            try {
               dbPutUser(
               {
                 "username":usernameText, 
                 "name":nameText, 
                 "email":emailText, 
                 "phone":phoneNum
+              }).then((res) => {
+                sessionStorage.setItem("user", JSON.stringify(res));
+                router.replace("/dashboard");
+              }).catch((e) => {
+                setErrorText("Unable to create user. Sorry!");
+                console.error("register error", e);
               });
-              router.replace("/dashboard");
-            } catch (e) {
-              setErrorText("Unable to create user. Sorry!");
-              return;
-            }
           }
         });
       }}><Text>Submit</Text></Pressable>
@@ -70,7 +70,7 @@ function Register({setMode}: props) {
   );
 }
 
-function Login({setMode}: props) {
+function Login({setMode}: Props) {
   // Going for speed of development here, not security
   const [usernameText, setUsernameText] = useState("Enter your username");
   const [errorText, setErrorText] = useState("");
@@ -83,10 +83,12 @@ function Login({setMode}: props) {
 
         // Get a user ID
         dbGetUserByUsername(usernameText)
-        .then(() => {
+        .then((res) => {
+          sessionStorage.setItem("user", JSON.stringify(res));
           router.replace("/dashboard"); 
         }).catch((e) => {
           setErrorText("Unable to find user. Maybe you meant to register?");
+          console.error("login error", e);
         });
         // router.replace("/dashboard");
       }}><Text>Submit</Text></Pressable>

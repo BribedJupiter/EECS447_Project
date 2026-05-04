@@ -1,19 +1,23 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Pressable, View, Text, StyleSheet } from "react-native";
 import tinycolor from "tinycolor2";
 import { router } from "expo-router";
 
 const PRIMARY_COLOR = "#5050d9";
 
+interface Props {
+    user: UserData
+}
+
 interface UserData {
     id: number,
     username: string,
+    name: string,
     email: string,
     phone: number,
 };
 
-export function UserInfo() {
-  const [currentUser, setCurrentUser] = useState({"Name": "Default"});
+export function UserInfo(props: Props) {
   const [languageSkillData, setLanguageSkillData] = useState([{}, {}, {}]);
   const [availabilityWindowData, setAvailabilityWindowData] = useState([{}, {}, {}]);
 
@@ -28,9 +32,9 @@ export function UserInfo() {
       >
         {/* User Data Box */}
         <View>
-          <Text>Name</Text>
-          <Text>Phone Number</Text>
-          <Text>Email</Text>
+          <Text>Name: {props.user.name}</Text>
+          <Text>Phone: {props.user.phone}</Text>
+          <Text>Email: {props.user.email}</Text>
         </View>
 
         {/* User Language Skills Box */}
@@ -69,12 +73,12 @@ export function UserInfo() {
   );
 }
 
-export function UpcomingMeetings(currentUser: User) {
+export function UpcomingMeetings(props: Props) {
   const [upcomingMeetingData, setUpcomingMeetingData] = useState([{}, {}, {}]);
 
   return (
     <View style={styles.upcomingMeetingWindow}>
-      <Text style={styles.cardTitle}>User: {currentUser.name}</Text>
+      <Text style={styles.cardTitle}>User: {props.user.username}</Text>
       <Text style={styles.cardTitle}>Upcoming Meetings</Text>
       <Text>Date | Time | Location | Language</Text>
       {upcomingMeetingData.map((mtg, index, array) => {
@@ -92,17 +96,21 @@ export function UpcomingMeetings(currentUser: User) {
 export function Logout() {
   return (
     <View>
-      <Pressable onPress={() => router.replace("/")}><Text style={styles.actionButtonText}>Logout</Text></Pressable>
+      <Pressable onPress={() => {router.replace("/"); sessionStorage.clear()}}><Text style={styles.actionButtonText}>Logout</Text></Pressable>
     </View>
   );
 }
 
 export default function Dashboard() {
-  const testUser: User = {
-    name: "TestUser",
-    email: "testUser@toothfairy.com",
-    phone: 1234567890
-  }
+  const userData = sessionStorage.getItem("user");
+  const [user, setUser] = useState<UserData | null>(null);
+
+  useEffect(() => {
+    if (userData !== null) {
+        const data: UserData = JSON.parse(userData);
+        setUser(data);
+    }
+  }, [userData])
 
   return (
     <View
@@ -113,17 +121,16 @@ export default function Dashboard() {
         flexDirection: "row",
       }}
     >
-
-    <UpcomingMeetings name={testUser.name} email={testUser.email} phone={testUser.phone} />
-    <UserInfo />
+        {!user ? (
+            <Pressable onPress={() => router.replace("/")}><Text>Please login or register here</Text></Pressable>
+        ) : (
+            <>
+                <UpcomingMeetings user={user} />
+                <UserInfo user={user}/>
+            </>
+        )}
     </View>
   );
-}
-
-interface User {
-  name: string;
-  email: string;
-  phone: number;
 }
 
 const styles = StyleSheet.create({

@@ -34,7 +34,7 @@ export async function checkUserExists(username: string) {
     }
 }
 
-export async function dbPutUser(data: {username: string, name: string, email: string, phone: number}): Promise<number> {
+export async function dbPutUser(data: {username: string, name: string, email: string, phone: number}) {
     const res = await fetch(`${API_URL}/user`, {
         method: "PUT",
         headers: {
