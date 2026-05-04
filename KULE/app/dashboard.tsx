@@ -5,6 +5,13 @@ import { router } from "expo-router";
 
 const PRIMARY_COLOR = "#5050d9";
 
+interface UserData {
+    id: number,
+    username: string,
+    email: string,
+    phone: number,
+};
+
 export function UserInfo() {
   const [currentUser, setCurrentUser] = useState({"Name": "Default"});
   const [languageSkillData, setLanguageSkillData] = useState([{}, {}, {}]);

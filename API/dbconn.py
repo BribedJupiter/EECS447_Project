@@ -50,22 +50,42 @@ def db_get_user_data(conn, user_id):
     cur = conn.cursor()
     params = [user_id]
     cur.execute(
-        "SELECT * FROM User WHERE id=%s", 
+        "SELECT * FROM User WHERE id=%s;", 
         params
     )
     result = cur.fetchall()
     cur.close()
     return result
 
-def db_put_user(name, email, phone):
-    return db_run_query(db_put_user_data, name, email, phone)
+def db_get_user_by_username(username):
+    user_id = db_run_query(db_get_user_id_by_username, username)
+    if user_id is None:
+        return None
+    return db_run_query(db_get_user_data, user_id)
 
-def db_put_user_data(conn, name, email, phone):
+def db_get_user_id_by_username(conn, username):
+    """Get a user's ID from their username, or return None."""
+    cur = conn.cursor()
+    cur.execute(
+        "SELECT id FROM User WHERE username=%s;",
+        (username,) # , is so that this is read as a tuple
+    )
+    result = cur.fetchone()
+    cur.close()
+    if result is None:
+        return None
+    else:
+        return result[0] # return the user id
+
+def db_put_user(username, name, email, phone):
+    return db_run_query(db_put_user_data, username, name, email, phone)
+
+def db_put_user_data(conn, username, name, email, phone):
     """Insert a user's data into the database, creating a new user."""
     cur = conn.cursor()
     cur.execute(
-        "INSERT INTO User (name, email, phone) VALUES (%s, %s, %s)",
-        (name, email, phone) 
+        "INSERT INTO User (username, name, email, phone) VALUES (%s, %s, %s, %s);",
+        (username, name, email, phone) 
     ) # id is automatically created using MySQL's AUTO_INCREMENT
     conn.commit()
 
@@ -84,6 +104,7 @@ def db_setup_tables(conn):
     cur.execute(
         "CREATE TABLE IF NOT EXISTS User(" \
             "id int AUTO_INCREMENT PRIMARY KEY," \
+            "username varchar(50) NOT NULL UNIQUE," \
             "name varchar(50)," \
             "email varchar(50)," \
             "phone int" \
