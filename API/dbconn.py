@@ -9,6 +9,10 @@ DB_HOST = os.getenv("DB_HOST")
 DB_PORT = os.getenv("DB_PORT")
 DB_NAME = os.getenv("DB_NAME")
 
+#####################################################
+#                 DB Meta Functions                 #
+#####################################################
+
 def db_get_version(conn):
     cur = conn.cursor()
     cur.execute('SELECT VERSION();')
@@ -42,6 +46,36 @@ def db_run_query(queryFunc, *args, **kwargs):
 def db_test_conn():
     return db_run_query(db_get_version)
 
+#####################################################
+#       Availability Window Functions               #
+#####################################################
+
+def db_create_window(user_id, date, start_time, end_time):
+    return db_run_query(db_create_window_data, user_id, date, start_time, end_time)
+
+def db_create_window_data(conn, user_id, date, start_time, end_time):
+    """Create an availability window for a particular user."""
+    cur = conn.cursor()
+    try:
+        cur.execute("START TRANSACTION;")
+        cur.execute(
+            "INSERT INTO Availability (user_id, date, start_time, end_time)" \
+            "VALUES (%s, %s, %s, %s)",
+            (user_id, date, start_time, end_time)
+        )
+        cur.execute("COMMIT;")
+        return True
+    except Exception as e:
+        cur.execute("ROLLBACK;")
+        print("INSERT Error", e)
+        return False
+    finally:
+        cur.close()
+
+#####################################################
+#                 User Data Functions               #
+#####################################################
+
 def db_get_user(user_id):
     return db_run_query(db_get_user_data, user_id)
 
@@ -55,7 +89,10 @@ def db_get_user_data(conn, user_id):
     )
     result = cur.fetchall()
     cur.close()
-    return result[0]
+    if result is None:
+        return None
+    else:
+        return result[0]
 
 def db_get_user_by_username(username):
     user_id = db_run_query(db_get_user_id_by_username, username)
@@ -84,15 +121,30 @@ def db_put_user(username, name, email, phone):
 def db_put_user_data(conn, username, name, email, phone):
     """Insert a user's data into the database, creating a new user."""
     cur = conn.cursor()
-    cur.execute(
-        "INSERT INTO User (username, name, email, phone) VALUES (%s, %s, %s, %s);",
-        (username, name, email, phone) 
-    ) # id is automatically created using MySQL's AUTO_INCREMENT
-    conn.commit()
+    try:
+        # Start a new transaction
+        cur.execute(
+            "START TRANSACTION;"
+        )
+        # Execute our insert
+        cur.execute(
+            "INSERT INTO User (username, name, email, phone) VALUES (%s, %s, %s, %s);", 
+            (username, name, email, phone) 
+        ) # id is automatically created using MySQL's AUTO_INCREMENT
+        # Return back the new user_id
+        user_id = cur.lastrowid
+        # Commit our transaction and return
+        cur.execute("COMMIT;")
+        return user_id
+    except Exception as e:
+        cur.execute("ROLLBACK;")
+        print("INSERT Error", e)
+    finally:
+        cur.close()
 
-    # Return back the new user_id
-    user_id = cur.lastrowid
-    return user_id
+#####################################################
+#             Databse Setup Functions               #
+#####################################################
 
 def db_setup():
     return db_run_query(db_setup_tables)

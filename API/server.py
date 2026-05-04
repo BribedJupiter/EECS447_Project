@@ -5,7 +5,7 @@ from dotenv import load_dotenv
 import os
 
 # Server imports
-from dbconn import db_test_conn, db_setup, db_get_user, db_put_user, db_get_user_by_username
+from dbconn import db_test_conn, db_setup, db_get_user, db_put_user, db_get_user_by_username, db_create_window
 
 # Load environment variables
 load_dotenv() # Get .env file variables
@@ -24,6 +24,10 @@ CORS(app, resources={r"/*": {
     ]
 }})
 
+#####################################################
+#             Databse Setup Functions               #
+#####################################################
+
 # Flask app routes
 @app.route("/")
 def hello_world():
@@ -35,10 +39,34 @@ def setup_db():
     result = "disabled" # db_setup()
     return {"message": result}, 200
 
+#####################################################
+#       Availability Window Functions               #
+#####################################################
+
+@app.route("/availability/<int:user_id>", methods=["PUT"])
+def create_window(user_id):
+    try:
+        data = request.get_json() or {}
+        result = db_create_window(user_id, data.get("date"), data.get("start_time"), data.get("end_time"))
+        if result is None or result == False:
+            return {"error": "failed to insert row"}, 500
+        else:
+            return jsonify({
+                "success": result
+            }), 200
+    except Exception as e:
+        print("ERROR:", e)
+        return {"error": "unknown"}, 500
+
+#####################################################
+#                 User Data Functions               #
+#####################################################
+
 @app.route("/user/<int:user_id>")
 def get_user(user_id):
     result = db_get_user(user_id)
-    print(result)
+    if result is None:
+        return {"error": "user not found"}, 404
     return jsonify({
             "id": result[0],
             "username": result[1],
@@ -52,7 +80,6 @@ def get_user_username(username):
     result = db_get_user_by_username(username)
     if result is None:
         return {"error":"user not found"}, 404
-    print(result)
     return jsonify({
         "id": result[0],
         "username": result[1],

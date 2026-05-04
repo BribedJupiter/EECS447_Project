@@ -1,8 +1,39 @@
 const API_URL = "https://project-ks2el.vercel.app"
 // const API_URL = "http://127.0.0.1:8000"
 
-export function getStoredUserID() {
+export interface UserData {
+    id: number,
+    username: string,
+    name: string,
+    email: string,
+    phone: number,
+};
 
+export async function getStoredUserID() {
+    const userData = sessionStorage.getItem("user");
+    if (!userData) {
+        return null;
+    }
+    const data: UserData = JSON.parse(userData);
+    return data.id;
+}
+
+export async function dbCreateWindow(user_id: number, date: string, start_time: string, end_time:string) {
+    const res = await fetch(`${API_URL}/availability/${user_id}`, {
+        method: "PUT",
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+            date: date,
+            start_time: start_time,
+            end_time: end_time,
+        })
+    })
+    if (!res.ok) {
+        throw new Error(`Failed to create availability window - ${res.status}`);
+    }
+    return res.json();
 }
 
 export async function dbGetUser(user_id: number) {

@@ -1,5 +1,5 @@
 import { router } from "expo-router";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { View, Text, TextInput, Pressable } from "react-native";
 import { checkUserExists, dbGetUserByUsername, dbPutUser } from "@/utils/api";
 
@@ -104,6 +104,11 @@ export default function Index() {
   const setModeCallback = (mode: string) => {
     setMode(mode);
   }
+
+  useEffect(() => {
+    // Clear session storage on page load
+    sessionStorage.clear();
+  }, [])
 
   return (
     <View>

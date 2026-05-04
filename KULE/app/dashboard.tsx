@@ -2,20 +2,13 @@ import { useEffect, useState } from "react";
 import { Pressable, View, Text, StyleSheet } from "react-native";
 import tinycolor from "tinycolor2";
 import { router } from "expo-router";
+import { UserData } from "../utils/api"
 
 const PRIMARY_COLOR = "#5050d9";
 
 interface Props {
     user: UserData
 }
-
-interface UserData {
-    id: number,
-    username: string,
-    name: string,
-    email: string,
-    phone: number,
-};
 
 export function UserInfo(props: Props) {
   const [languageSkillData, setLanguageSkillData] = useState([{}, {}, {}]);
