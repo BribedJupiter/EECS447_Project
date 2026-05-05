@@ -5,7 +5,7 @@ from dotenv import load_dotenv
 import os
 
 # Server imports
-from dbconn import db_test_conn, db_setup, db_get_user, db_put_user, db_get_user_by_username, db_create_window
+from dbconn import db_test_conn, db_setup, db_get_user, db_put_user, db_get_user_by_username, db_create_window, db_get_windows
 
 # Load environment variables
 load_dotenv() # Get .env file variables
@@ -57,6 +57,24 @@ def create_window(user_id):
     except Exception as e:
         print("ERROR:", e)
         return {"error": "unknown"}, 500
+    
+@app.route("/availability/<int:user_id>")
+def get_windows(user_id):
+    result = db_get_windows(user_id)
+    if result is None or len(result) <= 0:
+        return {"error": "user not found"}, 404
+    dataArr = []
+    for i in result:
+       # Skip potentially invalid entries
+       if i[0] is None or i[1] is None or i[2] is None:
+           continue
+       
+       # i will be a tuple of 3 objects: a datetime.date, and two datetime.datetimes
+       date = i[0].strftime('%Y-%m-%d')
+       start = i[1].strftime('%H:%M')
+       end = i[2].strftime('%H:%M')
+       dataArr.append((date, date + "T" + start, date + "T" + end))
+    return jsonify(dataArr), 200
 
 #####################################################
 #                 User Data Functions               #

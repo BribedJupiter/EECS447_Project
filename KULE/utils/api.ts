@@ -1,5 +1,7 @@
-const API_URL = "https://project-ks2el.vercel.app"
-// const API_URL = "http://127.0.0.1:8000"
+import dayjs from "dayjs";
+
+// const API_URL = "https://project-ks2el.vercel.app"
+const API_URL = "http://127.0.0.1:8000"
 
 export interface UserData {
     id: number,
@@ -8,6 +10,12 @@ export interface UserData {
     email: string,
     phone: number,
 };
+
+export interface AvailabilityWindow {
+    date: dayjs.Dayjs,
+    start_time: dayjs.Dayjs,
+    end_time: dayjs.Dayjs,
+}
 
 export async function getStoredUserID() {
     const userData = sessionStorage.getItem("user");
@@ -32,6 +40,16 @@ export async function dbCreateWindow(user_id: number, date: string, start_time: 
     })
     if (!res.ok) {
         throw new Error(`Failed to create availability window - ${res.status}`);
+    }
+    return res.json();
+}
+
+export async function dbGetWindows(user_id: number) {
+    const res = await fetch(`${API_URL}/availability/${user_id}`, {
+        method: "GET"
+    })
+    if (!res.ok) {
+        throw new Error(`Failed to fetch user data - ${res.status}`);
     }
     return res.json();
 }

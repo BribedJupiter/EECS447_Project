@@ -2,7 +2,8 @@ import { useEffect, useState } from "react";
 import { Pressable, View, Text, StyleSheet } from "react-native";
 import tinycolor from "tinycolor2";
 import { router } from "expo-router";
-import { UserData } from "../utils/api"
+import { dbGetWindows, UserData, AvailabilityWindow } from "../utils/api"
+import dayjs from "dayjs";
 
 const PRIMARY_COLOR = "#5050d9";
 
@@ -12,7 +13,27 @@ interface Props {
 
 export function UserInfo(props: Props) {
   const [languageSkillData, setLanguageSkillData] = useState([{}, {}, {}]);
-  const [availabilityWindowData, setAvailabilityWindowData] = useState([{}, {}, {}]);
+  const [availabilityWindowData, setAvailabilityWindowData] = useState<AvailabilityWindow[]>([]);
+
+  // fetch needed data
+  useEffect(() => {
+    // Load availability data
+    dbGetWindows(props.user.id).then((data: any[]) => {
+      const windows: AvailabilityWindow[] = []
+      for (const d of data) {
+        // data is a 2D array of 3 entries: date, start time, end time
+        windows.push({
+          "date": dayjs(d[0]),
+          "start_time": dayjs(d[1]),
+          "end_time": dayjs(d[2])
+        })
+      }
+      setAvailabilityWindowData(windows);
+    }).catch((e) => {
+      console.error("Unable to fetch availability window data", e);
+      setAvailabilityWindowData([]);
+    });
+  }, [])
 
   return (
     <View style={styles.userWindow}>
@@ -49,14 +70,15 @@ export function UserInfo(props: Props) {
       {/* User Availability box */}
       <View>
         <Text style={styles.cardTitle}>Availability</Text>
-        {availabilityWindowData.map((w, i, arr) => {
+        <Text>Date | Start Time | End Time</Text>
+        {availabilityWindowData.map((w: AvailabilityWindow, i, arr) => {
           return (
             <View
                 style={styles.listItemContainer}
               >
-                <Text>Date</Text>
-                <Text>Start Time</Text>
-                <Text>End Time</Text>
+                <Text>{w.date.format('YYYY-MM-DD').toString()} | </Text>
+                <Text>{w.start_time.format('h:MM A').toString()} | </Text>
+                <Text>{w.end_time.format('h:MM A').toString()}</Text>
               </View>
           );
         })}

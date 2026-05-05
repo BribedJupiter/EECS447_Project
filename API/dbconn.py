@@ -72,6 +72,19 @@ def db_create_window_data(conn, user_id, date, start_time, end_time):
     finally:
         cur.close()
 
+def db_get_windows(user_id):
+    return db_run_query(db_get_windows_data, user_id)
+
+def db_get_windows_data(conn, user_id, limit=25):
+    """Get the last ${limit} known availability windows for a user"""
+    cur = conn.cursor()
+    cur.execute("SELECT date, start_time, end_time FROM Availability WHERE user_id=%s", (user_id,))
+    result = cur.fetchall()
+    cur.close()
+    if result is None:
+        return None
+    return result
+
 #####################################################
 #                 User Data Functions               #
 #####################################################
