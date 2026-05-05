@@ -59,12 +59,11 @@ function Register({setMode}: Props) {
                 router.replace("/dashboard");
               }).catch((e) => {
                 setErrorText("Unable to create user. Sorry!");
-                console.error("register error", e);
               });
           }
         });
       }}><Text>Submit</Text></Pressable>
-      <Text>{errorText}</Text>
+      <Text>{errorText.length > 0 ? "Error: " + errorText : ""}</Text>
       <Pressable onPress={() => setMode("login")}><Text>Login Instead</Text></Pressable>
     </View>
   );
@@ -88,11 +87,10 @@ function Login({setMode}: Props) {
           router.replace("/dashboard"); 
         }).catch((e) => {
           setErrorText("Unable to find user. Maybe you meant to register?");
-          console.error("login error", e);
         });
         // router.replace("/dashboard");
       }}><Text>Submit</Text></Pressable>
-      <Text>{errorText}</Text>
+      <Text>{errorText.length > 0 ? "Error: " + errorText : ""}</Text>
       <Pressable onPress={() => setMode("register")}><Text>Register Instead</Text></Pressable>
     </View>
   );

@@ -1,7 +1,7 @@
 import dayjs from "dayjs";
 
-const API_URL = "https://project-ks2el.vercel.app"
-// const API_URL = "http://127.0.0.1:8000"
+// const API_URL = "https://project-ks2el.vercel.app"
+const API_URL = "http://127.0.0.1:8000"
 
 export interface UserData {
     id: number,
@@ -21,6 +21,15 @@ export interface Speaks {
     language: string,
     type: string,
     skill: number
+}
+
+export interface ScheduleOption {
+    name: string,
+    lang: string,
+    skill: number,
+    date?: dayjs.Dayjs,
+    start_time?: dayjs.Dayjs,
+    end_time?: dayjs.Dayjs
 }
 
 export async function getStoredUserID() {
@@ -64,6 +73,28 @@ export async function dbCreateSpeaks(user_id: number, lang: string, type: string
             type: type,
             skill: skill,
         })
+    })
+    if (!res.ok) {
+        throw new Error(`Failed to create availability window - ${res.status}`);
+    }
+    return res.json();
+}
+
+export async function dbFindUsers(user_id: number, lang: string, low_skill: number, high_skill: number, useAvailability: boolean) {
+    // Note that user_id here refers to the REQUESTING user who's availability needs to be sought
+    // We also know that the input will be good because they're selected from a list
+    // Setup search parameters
+    const params = {
+        "lang": lang,
+        "low_skill": low_skill.toString(),
+        "high_skill": high_skill.toString(),
+        "useAvailability": useAvailability.toString()
+    }
+    const query = new URLSearchParams(params).toString()
+
+    // Get matching user data
+    const res = await fetch(`${API_URL}/schedule/${user_id}?${query}`, {
+        method: "GET",
     })
     if (!res.ok) {
         throw new Error(`Failed to create availability window - ${res.status}`);

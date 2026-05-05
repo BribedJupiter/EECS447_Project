@@ -7,7 +7,7 @@ import os
 # Server imports
 from dbconn import (db_test_conn, db_setup, db_get_user, db_put_user, db_get_user_by_username, 
                     db_create_window, db_get_windows, db_set_languages, db_get_langs,
-                    db_create_speaks, db_get_speaks)
+                    db_create_speaks, db_get_speaks, db_get_matching_users)
 
 # Load environment variables
 load_dotenv() # Get .env file variables
@@ -73,6 +73,41 @@ def create_speaks(user_id):
             return jsonify({
                 "success": result
             }), 200
+    except Exception as e:
+        print("ERROR:", e)
+        return {"error": "unknown"}, 500
+
+#####################################################
+#                 Meeting Functions                 #
+#####################################################
+
+@app.route("/schedule/<int:user_id>")
+def get_matching_users(user_id):
+    try: 
+        lang = request.args.get("lang")
+        low_skill = request.args.get("low_skill")
+        high_skill = request.args.get("high_skill")
+        useAvailability = request.args.get("useAvailability")
+        result = db_get_matching_users(user_id, lang, low_skill, high_skill, useAvailability)
+        dataArr = []
+        for i in result:
+            # If we want availability data
+            if len(i) == 6:
+                # Skip potentially invalid entries - in case timestamps are bad
+                if i[3] is None or i[4] is None or i[5] is None:
+                    continue
+
+                # i will be a tuple of 6 objects, the last 3 are a datetime.date, and two datetime.datetimes
+                date = i[3].strftime('%Y-%m-%d')
+                start = i[4].strftime('%H:%M')
+                end = i[5].strftime('%H:%M')
+                dataArr.append((i[0], i[1], i[2], date, date + "T" + start, date + "T" + end))
+            # If we just want matches
+            elif len(i) == 3:
+                dataArr.append((i[0], i[1], i[2]))
+            else:
+                continue
+        return jsonify(dataArr)
     except Exception as e:
         print("ERROR:", e)
         return {"error": "unknown"}, 500

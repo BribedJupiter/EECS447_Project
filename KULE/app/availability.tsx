@@ -44,7 +44,7 @@ export default function AddAvailability() {
                     return;
                 });
             }}>Submit</Button>
-            <Text>{errorText}</Text>
+            <Text>{errorText.length > 0 ? "Error: " + errorText : ""}</Text>
         </View>
     );
 }

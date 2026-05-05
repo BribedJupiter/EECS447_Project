@@ -15,11 +15,9 @@ export default function SpeaksForm() {
     useEffect(() => {
         dbGetLanguages()
             .then((res) => {
-                console.log(res);
                 setLangList(res);
             })
             .catch((e) => {
-                console.error("Unable to fetch languages", e);
                 setLangList([]);
             })
     }, []);
@@ -58,7 +56,7 @@ export default function SpeaksForm() {
                 </Select>
             </FormControl>
             <FormControl fullWidth>
-                <InputLabel id="select-skill-label">Goal</InputLabel>
+                <InputLabel id="select-skill-label">Skill Level</InputLabel>
                 <Select
                     id="select-skill"
                     labelId="select-skill-label"
@@ -100,7 +98,7 @@ export default function SpeaksForm() {
                     return;
                 });
             }}>Submit</Button>
-            <Text>{errorText}</Text>
+            <Text>{errorText.length > 0 ? "Error: " + errorText : ""}</Text>
         </View>
     );
 }

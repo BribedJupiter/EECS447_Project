@@ -104,6 +104,63 @@ def db_create_speaks_data(conn, user_id, lang, type, skill):
         cur.close()
 
 #####################################################
+#                 Meeting Functions                 #
+#####################################################
+
+def db_get_matching_users(user_id, lang, low_skill, high_skill, useAvailability):
+    return db_run_query(db_get_matching_users_data, user_id, lang, low_skill, high_skill, useAvailability)
+
+def db_get_matching_users_data(conn, user_id, lang, low_skill, high_skill, useAvailability):
+    """Find all records of users matching the given criteria."""
+    # Find users who are within the skill range, match the language, and have
+    # compatible availability windows
+    cur = conn.cursor()
+    try:
+        cur.execute("START TRANSACTION;")
+        if useAvailability == "false":
+            cur.execute("SELECT User.name, Speaks.language_name, Speaks.skill_level " \
+                        "FROM User "
+                        "INNER JOIN Speaks ON Speaks.user_id=User.id " \
+                        "WHERE User.id<>%s " \
+                        "AND Speaks.language_name=%s " \
+                        "AND Speaks.skill_level>=%s " \
+                        "AND Speaks.skill_level<=%s;"
+                        , (user_id, lang, low_skill, high_skill)
+            )
+        else:
+            cur.execute("SELECT u.name, s.language_name, s.skill_level, a.date, a.start_time, a.end_time " \
+                        "FROM ( " \
+                            # Find all of the availability records with user_ids that are compatible with the requesting user's availability
+                            # Note this will already be filtered to only times compatible with the requesting user.
+                            "SELECT a2.user_id, a2.date, a2.start_time, a2.end_time " \
+                            "FROM Availability a1 " \
+                            "INNER JOIN Availability a2 ON a1.user_id<>a2.user_id " \
+                            "WHERE a1.user_id=%s " \
+                            "AND a1.date=a2.date " \
+                            "AND a2.start_time >= a1.start_time " \
+                            "AND a2.end_time <= a1.end_time " \
+                            "AND a2.start_time <= a2.end_time " \
+                        ") AS a " \
+                        # Note here we are joining with the users who are NOT the reuqesting user 
+                        # (we're not searching for our own data)
+                        "INNER JOIN User u ON a.user_id=u.id " \
+                        "INNER JOIN Speaks s ON a.user_id=s.user_id " \
+                        "WHERE s.language_name=%s " \
+                        "AND s.skill_level>=%s " \
+                        "AND s.skill_level<= %s;"
+                        , (user_id, lang, low_skill, high_skill) 
+            )
+        results = cur.fetchall()
+        cur.execute("COMMIT;")
+        return results
+    except Exception as e:
+        cur.execute("ROLLBACK;")
+        print("SELECT Error", e)
+        return []
+    finally:
+        cur.close()
+
+#####################################################
 #       Availability Window Functions               #
 #####################################################
 

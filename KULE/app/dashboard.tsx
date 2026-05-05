@@ -165,7 +165,7 @@ export default function Dashboard() {
   );
 }
 
-const styles = StyleSheet.create({
+export const styles = StyleSheet.create({
   listItemContainer: {
     flex: 1,
     justifyContent: "center",
