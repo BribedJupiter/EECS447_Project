@@ -1,6 +1,7 @@
 import mysql.connector
 from dotenv import load_dotenv
 import os
+import datetime
 
 load_dotenv() # Get .env file variables
 DB_USER = os.getenv("DB_USER")
@@ -128,18 +129,18 @@ def db_get_matching_users_data(conn, user_id, lang, low_skill, high_skill, useAv
                         , (user_id, lang, low_skill, high_skill)
             )
         else:
-            cur.execute("SELECT DISTINCT u.name, s.language_name, s.skill_level, a.date, a.start_time, a.end_time " \
+            cur.execute("SELECT DISTINCT u.name, s.language_name, s.skill_level, a.date, a.start_time, a.end_time, a.req_st, a.req_et, a.user_id " \
                         "FROM ( " \
                             # Find all of the availability records with user_ids that are compatible with the requesting user's availability
                             # Note this will already be filtered to only times compatible with the requesting user.
-                            "SELECT a2.user_id, a2.date, a2.start_time, a2.end_time " \
+                            "SELECT a2.user_id, a2.date, a2.start_time, a2.end_time, a1.start_time AS req_st, a1.end_time AS req_et " \
                             "FROM Availability a1 " \
                             "INNER JOIN Availability a2 ON a1.user_id<>a2.user_id " \
                             "WHERE a1.user_id=%s " \
                             "AND a1.date=a2.date " \
-                            "AND (a2.start_time >= a1.start_time " \
-                            "OR a2.end_time <= a1.end_time) " \
-                            "AND a2.start_time <= a2.end_time " \
+                            "AND (a2.start_time < a1.end_time " \
+                            "AND a2.end_time > a1.start_time) " \
+                            "AND a2.start_time < a2.end_time " \
                         ") AS a " \
                         # Note here we are joining with the users who are NOT the reuqesting user 
                         # (we're not searching for our own data)
@@ -182,6 +183,62 @@ def db_create_window_data(conn, user_id, date, start_time, end_time):
     except Exception as e:
         cur.execute("ROLLBACK;")
         print("INSERT Error", e)
+        return False
+    finally:
+        cur.close()
+
+def db_resize_window_subsection(user_id, date, new_start_time, new_end_time):
+    return db_run_query(db_resize_window_subsection_data, user_id, date, new_start_time, new_end_time)
+
+def db_resize_window_subsection_data(conn, user_id, date, new_start_time, new_end_time):
+    """Delete from an availability window subsection. That is, consider the block from the start_time to the end_time invalid
+    but leave the rest of the block if it exists."""
+    cur = conn.cursor()
+    try:
+        cur.execute("START TRANSACTION;")
+        # Get the wrapper start and end times if they exist
+        cur.execute("SELECT user_id, date, start_time, end_time " \
+                    "FROM Availability " \
+                    "WHERE user_id=%s " \
+                    "AND date=%s " \
+                    "AND (start_time>=%s " \
+                    "OR end_time=%s);"
+                    , (user_id, date, new_start_time, new_end_time))
+        overlapping_times = cur.fetchall()
+        for ot in overlapping_times:
+            # OT will always be a tuple of 4 elements. Each is marked as a PRIMARY KEY and thus also NOT NULL
+            # For each overlapping time, we want to delete it, then add the difference between it and the new time
+            cur.execute(
+                "DELETE FROM Availability " \
+                "WHERE user_id=%s " \
+                "AND date=%s " \
+                "AND start_time=%s " \
+                "AND end_time=%s;",
+                (ot[0], ot[1], ot[2], ot[3])
+            )
+            # Now, find the differences to add back in
+            date_obj = datetime.datetime.strptime(date, "%Y-%m-%d")
+            nst_obj = datetime.datetime.strptime(new_start_time, "%Y-%m-%dT%H:%M")
+            net_obj = datetime.datetime.strptime(new_end_time, "%Y-%m-%dT%H:%M")
+            if date_obj.date() != ot[1]:
+                raise RuntimeError("Found date did not match provided data.")
+            if ot[2] < nst_obj:
+                # We need to add back the time from the old start to the new meeting start
+                cur.execute("INSERT INTO Availability (user_id, date, start_time, end_time) " \
+                            "VALUES (%s, %s, %s, %s)",
+                            (ot[0], ot[1], ot[2], nst_obj.strftime("%Y-%m-%dT%H:%M")))
+            if ot[3] > net_obj:
+                # We need to add back the time from the new meeting end to the old meeting end
+                cur.execute("INSERT INTO Availability (user_id, date, start_time, end_time) " \
+                            "VALUES (%s, %s, %s, %s)",
+                            (ot[0], ot[1], net_obj.strftime("%Y-%m-%dT%H:%M"), ot[3]))
+
+        # Finally our transaction and return
+        cur.execute("COMMIT;")
+        return True
+    except Exception as e:
+        cur.execute("ROLLBACK;")
+        print("DELETE Error", e)
         return False
     finally:
         cur.close()

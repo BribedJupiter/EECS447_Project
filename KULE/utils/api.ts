@@ -29,7 +29,10 @@ export interface ScheduleOption {
     skill: number,
     date?: dayjs.Dayjs,
     start_time?: dayjs.Dayjs,
-    end_time?: dayjs.Dayjs
+    end_time?: dayjs.Dayjs,
+    requester_st?: dayjs.Dayjs,
+    requester_et?: dayjs.Dayjs
+    id?: number,
 }
 
 export async function getStoredUserID() {
@@ -116,6 +119,25 @@ export async function dbCreateWindow(user_id: number, date: string, start_time: 
     })
     if (!res.ok) {
         throw new Error(`Failed to create availability window - ${res.status}`);
+    }
+    return res.json();
+}
+
+export async function dbResizeWindow(user_id: number, date: string, mtg_start: string, mtg_end: string) {
+    // Setup query parameters
+    const params = {
+        "date": date,
+        "start_time": mtg_start,
+        "end_time": mtg_end
+    }
+    const query = new URLSearchParams(params).toString()
+
+    // Resize the user's window based on the provided meeting time
+    const res = await fetch(`${API_URL}/availability/${user_id}?${query}`, {
+        method: "POST",
+    })
+    if (!res.ok) {
+        throw new Error(`Failed to resize availability window - ${res.status}`);
     }
     return res.json();
 }
