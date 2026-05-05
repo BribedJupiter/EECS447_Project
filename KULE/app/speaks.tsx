@@ -3,6 +3,7 @@ import { View, Text, ActivityIndicator } from "react-native";
 import { useEffect, useState } from "react";
 import { dbCreateSpeaks, dbGetLanguages, getStoredUserID } from "@/utils/api";
 import { router } from "expo-router";
+import { styles } from "./dashboard";
 
 export default function SpeaksForm() {
     const [goal, setGoal] = useState("Studying");
@@ -80,24 +81,27 @@ export default function SpeaksForm() {
                     <MenuItem value={10}>10</MenuItem>
                 </Select>
             </FormControl>
-            <Button onClick={() => {
-                // Make API call
-                getStoredUserID()
-                .then((user_id) => {
-                    if (!user_id) {
-                        setErrorText("Try logging in again.");
-                    } else {
-                        dbCreateSpeaks(user_id, language, goal, skill).catch((e) => { 
-                            setErrorText("Unable to create window. Maybe you have a duplicate?");
-                        });
-                        router.replace("/dashboard");
+            <View style={styles.actionButtonRow}>
+                <Button onClick={() => router.replace("/dashboard")}>Back</Button>
+                <Button onClick={() => {
+                    // Make API call
+                    getStoredUserID()
+                    .then((user_id) => {
+                        if (!user_id) {
+                            setErrorText("Try logging in again.");
+                        } else {
+                            dbCreateSpeaks(user_id, language, goal, skill).catch((e) => { 
+                                setErrorText("Unable to create window. Maybe you have a duplicate?");
+                            });
+                            router.replace("/dashboard");
+                        }
                     }
-                }
-                ).catch((e) => {
-                    setErrorText("Could not find a user for this langauge");
-                    return;
-                });
-            }}>Submit</Button>
+                    ).catch((e) => {
+                        setErrorText("Could not find a user for this langauge");
+                        return;
+                    });
+                }}>Submit</Button>
+            </View>
             <Text>{errorText.length > 0 ? "Error: " + errorText : ""}</Text>
         </View>
     );

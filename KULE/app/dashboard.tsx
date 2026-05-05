@@ -73,6 +73,7 @@ export function UserInfo(props: Props) {
             return (
               <View
                 style={styles.listItemContainer}
+                key={s.language + s.type + s.skill}
               >
                 <Text>{s.language} | </Text>
                 <Text>{s.type} | </Text>
@@ -92,10 +93,11 @@ export function UserInfo(props: Props) {
           return (
             <View
                 style={styles.listItemContainer}
+                key={w.date.toString() + w.start_time.toString() + w.end_time.toString()}
               >
                 <Text>{w.date.format('YYYY-MM-DD').toString()} | </Text>
-                <Text>{w.start_time.format('h:MM A').toString()} | </Text>
-                <Text>{w.end_time.format('h:MM A').toString()}</Text>
+                <Text>{w.start_time.format('h:mm A').toString()} | </Text>
+                <Text>{w.end_time.format('h:mm A').toString()}</Text>
               </View>
           );
         })}
@@ -167,6 +169,13 @@ export default function Dashboard() {
 
 export const styles = StyleSheet.create({
   listItemContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    flexDirection: "row",
+    padding: 5
+  },
+  actionButtonRow: {
     flex: 1,
     justifyContent: "center",
     alignItems: "center",

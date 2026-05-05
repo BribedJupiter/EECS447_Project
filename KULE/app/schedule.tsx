@@ -4,7 +4,8 @@ import { useEffect, useState } from "react";
 import { dbFindUsers, dbGetLanguages, getStoredUserID } from "@/utils/api";
 import { ScheduleOption } from "../utils/api";
 import dayjs from "dayjs";
-import { styles } from "./dashboard"
+import { styles } from "./dashboard";
+import { router } from "expo-router";
 
 export default function MeetingScheduler() {
     const [matchAvailability, setMatchAvailability] = useState(false);
@@ -102,57 +103,60 @@ export default function MeetingScheduler() {
                         matchAvailability == false ? setMatchAvailability(true) : setMatchAvailability(false);
                     }}/>} label="Match availability" />
             </FormControl>
-            <Button onClick={() => {
-                // Ensure that high is higher than low
-                if (skillHigh < skillLow) {
-                    setErrorText("Ensure that the top of the skill level is higher than the bottom");
-                    return;
-                }
-                
-                // Make API call
-                getStoredUserID()
-                .then((user_id) => {
-                    if (!user_id) {
-                        setErrorText("Try logging in again");
-                    } else {
-                        // Search for users that match the criteria (availability or not depending on toggle)
-                        dbFindUsers(user_id, language, skillLow, skillHigh, matchAvailability)
-                        .then((data) => {
-                            const optList: ScheduleOption[] = []
-                            for (const d of data) {
-                                if (d.length === 6) {
-                                  const opt: ScheduleOption = {
-                                        name: d[0],
-                                        lang: d[1],
-                                        skill: d[2],
-                                        date: dayjs(d[3]),
-                                        start_time: dayjs(d[4]),
-                                        end_time: dayjs(d[5])
-                                    }
-                                    optList.push(opt)
-                                }
-                                if (d.length === 3) {
-                                    const opt: ScheduleOption = {
-                                        name: d[0],
-                                        lang: d[1],
-                                        skill: d[2],
-                                    }
-                                    optList.push(opt)
-                                }
-                                // Don't do anything if it doesn't match the format
-                            }
-                            setFoundMeetingOptions(optList);
-                        })
-                        .catch((e) => { 
-                            setErrorText("Unable to find any users");
-                        });
+            <View style={styles.actionButtonRow}>
+                <Button onClick={() => router.replace("/dashboard")}>Back</Button>
+                <Button onClick={() => {
+                    // Ensure that high is higher than low
+                    if (skillHigh < skillLow) {
+                        setErrorText("Ensure that the top of the skill level is higher than the bottom");
+                        return;
                     }
-                }
-                ).catch((e) => {
-                    setErrorText("Could not find a primary user for this search");
-                    return;
-                })
-            }}>Search</Button>
+                    
+                    // Make API call
+                    getStoredUserID()
+                    .then((user_id) => {
+                        if (!user_id) {
+                            setErrorText("Try logging in again");
+                        } else {
+                            // Search for users that match the criteria (availability or not depending on toggle)
+                            dbFindUsers(user_id, language, skillLow, skillHigh, matchAvailability)
+                            .then((data) => {
+                                const optList: ScheduleOption[] = []
+                                for (const d of data) {
+                                    if (d.length === 6) {
+                                    const opt: ScheduleOption = {
+                                            name: d[0],
+                                            lang: d[1],
+                                            skill: d[2],
+                                            date: dayjs(d[3]),
+                                            start_time: dayjs(d[4]),
+                                            end_time: dayjs(d[5])
+                                        }
+                                        optList.push(opt)
+                                    }
+                                    if (d.length === 3) {
+                                        const opt: ScheduleOption = {
+                                            name: d[0],
+                                            lang: d[1],
+                                            skill: d[2],
+                                        }
+                                        optList.push(opt)
+                                    }
+                                    // Don't do anything if it doesn't match the format
+                                }
+                                setFoundMeetingOptions(optList);
+                            })
+                            .catch((e) => { 
+                                setErrorText("Unable to find any users");
+                            });
+                        }
+                    }
+                    ).catch((e) => {
+                        setErrorText("Could not find a primary user for this search");
+                        return;
+                    })
+                }}>Search</Button>
+            </View>
             <Text>{errorText.length > 0 ? "Error: " + errorText : ""}</Text>
             <Divider></Divider>
             <Text>Name | Language | Skill | Date | Start Time | End Time</Text>
@@ -166,8 +170,8 @@ export default function MeetingScheduler() {
                             <Text>{s.lang} | </Text>
                             <Text>{s.skill}</Text>
                             <Text>{!s.date ? "" : " | " + s.date.format('YYYY-MM-DD').toString() + " | "}</Text>
-                            <Text>{!s.start_time ? "" : s.start_time.format('h:MM A').toString() + " | "}</Text>
-                            <Text>{!s.end_time ? "" : s.end_time.format('h:MM A').toString()}</Text>
+                            <Text>{!s.start_time ? "" : s.start_time.format('h:mm A').toString() + " | "}</Text>
+                            <Text>{!s.end_time ? "" : s.end_time.format('h:mm A').toString()}</Text>
                           </View>
                         );
                       })}
