@@ -17,6 +17,12 @@ export interface AvailabilityWindow {
     end_time: dayjs.Dayjs,
 }
 
+export interface Speaks {
+    language: string,
+    type: string,
+    skill: number
+}
+
 export async function getStoredUserID() {
     const userData = sessionStorage.getItem("user");
     if (!userData) {
@@ -24,6 +30,45 @@ export async function getStoredUserID() {
     }
     const data: UserData = JSON.parse(userData);
     return data.id;
+}
+
+export async function dbGetLanguages() {
+    const res = await fetch(`${API_URL}/language`, {
+        method: "GET"
+    })
+    if (!res.ok) {
+        throw new Error(`Failed to fetch language data - ${res.status}`);
+    }
+    return res.json();
+}
+
+export async function dbGetSpeaks(user_id: number) {
+    const res = await fetch(`${API_URL}/language/${user_id}`, {
+        method: "GET"
+    })
+    if (!res.ok) {
+        throw new Error(`Failed to fetch language data - ${res.status}`);
+    }
+    return res.json();
+}
+
+export async function dbCreateSpeaks(user_id: number, lang: string, type: string, skill: number) {
+    // We know all input will be valid since we're just selecting from drop downs
+    const res = await fetch(`${API_URL}/language/${user_id}`, {
+        method: "PUT",
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+            lang: lang,
+            type: type,
+            skill: skill,
+        })
+    })
+    if (!res.ok) {
+        throw new Error(`Failed to create availability window - ${res.status}`);
+    }
+    return res.json();
 }
 
 export async function dbCreateWindow(user_id: number, date: string, start_time: string, end_time:string) {
@@ -49,7 +94,7 @@ export async function dbGetWindows(user_id: number) {
         method: "GET"
     })
     if (!res.ok) {
-        throw new Error(`Failed to fetch user data - ${res.status}`);
+        throw new Error(`Failed to fetch window data - ${res.status}`);
     }
     return res.json();
 }

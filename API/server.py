@@ -5,7 +5,9 @@ from dotenv import load_dotenv
 import os
 
 # Server imports
-from dbconn import db_test_conn, db_setup, db_get_user, db_put_user, db_get_user_by_username, db_create_window, db_get_windows
+from dbconn import (db_test_conn, db_setup, db_get_user, db_put_user, db_get_user_by_username, 
+                    db_create_window, db_get_windows, db_set_languages, db_get_langs,
+                    db_create_speaks, db_get_speaks)
 
 # Load environment variables
 load_dotenv() # Get .env file variables
@@ -38,6 +40,42 @@ def hello_world():
 def setup_db():
     result = "disabled" # db_setup()
     return {"message": result}, 200
+
+@app.route("/setup-languages")
+def setup_languages():
+    result = "disabled" # db_set_languages()
+    return {"message": result}, 200
+
+#####################################################
+#              Language Functions                   #
+#####################################################
+
+@app.route("/language")
+def get_langs():
+    result = db_get_langs()
+    return jsonify(result)
+
+@app.route("/language/<int:user_id>")
+def get_speaks(user_id):
+    result = db_get_speaks(user_id)
+    if result is None or len(result) <= 0:
+        return {"error": "user not found"}, 404
+    return jsonify(result), 200
+
+@app.route("/language/<int:user_id>", methods=["PUT"])
+def create_speaks(user_id):
+    try:
+        data = request.get_json() or {}
+        result = db_create_speaks(user_id, data.get("lang"), data.get("type"), data.get("skill"))
+        if result is None or result == False:
+            return {"error": "failed to insert row"}, 500
+        else:
+            return jsonify({
+                "success": result
+            }), 200
+    except Exception as e:
+        print("ERROR:", e)
+        return {"error": "unknown"}, 500
 
 #####################################################
 #       Availability Window Functions               #

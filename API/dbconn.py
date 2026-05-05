@@ -47,6 +47,63 @@ def db_test_conn():
     return db_run_query(db_get_version)
 
 #####################################################
+#               Language Functions                  #
+#####################################################
+
+def db_get_langs():
+    return db_run_query(db_get_lang_data)
+
+def db_get_lang_data(conn):
+    """Get the list of all languages."""
+    cur = conn.cursor()
+    cur.execute("SELECT * FROM Language;")
+    result = cur.fetchall()
+    cur.close()
+    if result is None:
+        return []
+    else:
+        # We know fetchall will return a list of lists of length 1
+        data = []
+        for lang in result:
+            # Flatten the list
+            data.append(lang[0])
+        return data
+    
+def db_get_speaks(user_id):
+    return db_run_query(db_get_speaks_data, user_id)
+
+def db_get_speaks_data(conn, user_id):
+    """Get all the language speaking data for a user."""
+    cur = conn.cursor()
+    cur.execute("SELECT language_name, target_or_fluent, skill_level FROM Speaks WHERE user_id=%s", (user_id,))
+    result = cur.fetchall()
+    cur.close()
+    return result
+
+def db_create_speaks(user_id, lang, type, skill):
+    return db_run_query(db_create_speaks_data, user_id, lang, type, skill)
+
+def db_create_speaks_data(conn, user_id, lang, type, skill):
+    """Create a record about a user speaking a certain language."""
+    # We know input will be valid since it is selected from a drop down menu
+    cur = conn.cursor()
+    try:
+        cur.execute("START TRANSACTION;")
+        cur.execute(
+            "INSERT INTO Speaks (user_id, language_name, target_or_fluent, skill_level)" \
+            "VALUES (%s, %s, %s, %s)",
+            (user_id, lang, type, skill)
+        )
+        cur.execute("COMMIT;")
+        return True
+    except Exception as e:
+        cur.execute("ROLLBACK;")
+        print("INSERT Error", e)
+        return False
+    finally:
+        cur.close()
+
+#####################################################
 #       Availability Window Functions               #
 #####################################################
 
@@ -158,6 +215,27 @@ def db_put_user_data(conn, username, name, email, phone):
 #####################################################
 #             Databse Setup Functions               #
 #####################################################
+
+def db_set_languages():
+    return db_run_query(db_set_language_data)
+
+def db_set_language_data(conn):
+    """Fill the Language table with a list of languages."""
+    langs = ["English", "Spanish", "Portuguese", "French", "Arabic", "Mandarin", "Thai", "Polish", "Cantonese", "German", "Italian",
+             "Japanese", "Russian", "Korean", "Bengali", "Sign/Body", "Hebrew", "Kazakh", "Hindi", "Urdu", "Vietnamese", "Indonesian", 
+             "Swahili", "Navajo"]
+    cur = conn.cursor()
+    try:
+        cur.execute("START TRANSACTION;")
+        for lang in langs:
+            cur.execute("INSERT INTO Language (name) VALUES (%s)", (lang,))
+        cur.execute("COMMIT;")
+        return True
+    except Exception as e:
+        cur.execute("ROLLBACK");
+        print("INSERT Error", e)
+    finally:
+        cur.close()
 
 def db_setup():
     return db_run_query(db_setup_tables)

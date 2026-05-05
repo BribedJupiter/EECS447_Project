@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { Pressable, View, Text, StyleSheet } from "react-native";
 import tinycolor from "tinycolor2";
 import { router } from "expo-router";
-import { dbGetWindows, UserData, AvailabilityWindow } from "../utils/api"
+import { dbGetWindows, UserData, AvailabilityWindow, Speaks, dbGetSpeaks } from "../utils/api"
 import dayjs from "dayjs";
 
 const PRIMARY_COLOR = "#5050d9";
@@ -12,8 +12,8 @@ interface Props {
 }
 
 export function UserInfo(props: Props) {
-  const [languageSkillData, setLanguageSkillData] = useState([{}, {}, {}]);
   const [availabilityWindowData, setAvailabilityWindowData] = useState<AvailabilityWindow[]>([]);
+  const [speaksData, setSpeaksData] = useState<Speaks[]>([]);
 
   // fetch needed data
   useEffect(() => {
@@ -32,6 +32,21 @@ export function UserInfo(props: Props) {
     }).catch((e) => {
       console.error("Unable to fetch availability window data", e);
       setAvailabilityWindowData([]);
+    });
+
+    dbGetSpeaks(props.user.id).then((data: any[]) => {
+      const speaks: Speaks[] = []
+      for (const d of data) {
+        speaks.push({
+          "language": d[0],
+          "type": d[1],
+          "skill": d[2]
+        })
+      }
+      setSpeaksData(speaks);
+    }).catch((e) => {
+      console.error("Unable to fetch availability window data", e);
+      setSpeaksData([]);
     });
   }, [])
 
@@ -53,19 +68,21 @@ export function UserInfo(props: Props) {
 
         {/* User Language Skills Box */}
         <View>
-          {languageSkillData.map((lang, index, array) => {
+          <Text>Language | Native or Studying | Skill Level</Text>
+          {speaksData.map((s: Speaks, index, array) => {
             return (
               <View
                 style={styles.listItemContainer}
               >
-                <Text>Language</Text>
-                <Text>Target or Fluent</Text>
-                <Text>Skill Level</Text>
+                <Text>{s.language} | </Text>
+                <Text>{s.type} | </Text>
+                <Text>{s.skill}</Text>
               </View>
             );
           })}
         </View>
       </View>
+      <Pressable onPress={() => {router.replace("/speaks")}}><Text style={styles.actionButtonText}>Add Language</Text></Pressable>
 
       {/* User Availability box */}
       <View>
