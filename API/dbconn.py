@@ -128,7 +128,7 @@ def db_get_matching_users_data(conn, user_id, lang, low_skill, high_skill, useAv
                         , (user_id, lang, low_skill, high_skill)
             )
         else:
-            cur.execute("SELECT u.name, s.language_name, s.skill_level, a.date, a.start_time, a.end_time " \
+            cur.execute("SELECT DISTINCT u.name, s.language_name, s.skill_level, a.date, a.start_time, a.end_time " \
                         "FROM ( " \
                             # Find all of the availability records with user_ids that are compatible with the requesting user's availability
                             # Note this will already be filtered to only times compatible with the requesting user.
@@ -137,8 +137,8 @@ def db_get_matching_users_data(conn, user_id, lang, low_skill, high_skill, useAv
                             "INNER JOIN Availability a2 ON a1.user_id<>a2.user_id " \
                             "WHERE a1.user_id=%s " \
                             "AND a1.date=a2.date " \
-                            "AND a2.start_time >= a1.start_time " \
-                            "AND a2.end_time <= a1.end_time " \
+                            "AND (a2.start_time >= a1.start_time " \
+                            "OR a2.end_time <= a1.end_time) " \
                             "AND a2.start_time <= a2.end_time " \
                         ") AS a " \
                         # Note here we are joining with the users who are NOT the reuqesting user 
