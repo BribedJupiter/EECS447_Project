@@ -27,6 +27,8 @@ export default function MeetingScheduler() {
     const [foundMeetingOptions, setFoundMeetingOptions] = useState<ScheduleOption[]>([]);
     const [meetingLocation, setMeetingLocation] = useState("Wescoe");
     const [fetchSuccess, setFetchSuccess] = useState<Boolean | null>(null);
+    const [hasSearched, setHasSearched] = useState(false);
+    const [searchComplete, setSearchComplete] = useState(false);
 
     // Load language data
     useEffect(() => {
@@ -146,6 +148,7 @@ export default function MeetingScheduler() {
                         setErrorText("Ensure that the top of the skill level is higher than the bottom");
                         return;
                     }
+                    setHasSearched(true);
                     
                     // Make API call
                     getStoredUserID()
@@ -187,6 +190,9 @@ export default function MeetingScheduler() {
                             })
                             .catch((e) => { 
                                 setErrorText("Unable to find any users");
+                            })
+                            .finally(() => {
+                                setSearchComplete(true);
                             });
                         }
                     }
@@ -290,6 +296,9 @@ export default function MeetingScheduler() {
                     </TableBody>
                 </Table>
             </TableContainer>
+            {foundMeetingOptions.length <= 0 && hasSearched && searchComplete ? (
+                <Text style={styles.errorText}>No users found.</Text>
+            ) : null}
         </View>
     ) : fetchSuccess == false ? (
         <View

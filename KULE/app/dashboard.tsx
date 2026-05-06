@@ -83,7 +83,7 @@ export function UserInfo(props: Props) {
         <View style={styles.languageWindow}>
             <Text style={styles.cardTitle}>Languages Spoken</Text>
         {fetchLangSuccess ? (
-          <Fragment>
+          <View style={{alignItems: "center", justifyContent: "center", flex: 1}}>
             <TableContainer>
               <Table>
                 <TableHead>
@@ -108,7 +108,10 @@ export function UserInfo(props: Props) {
                 </TableBody>
               </Table>
             </TableContainer>
-          </Fragment>
+            {speaksData.length <= 0 ? (
+              <Text style={styles.errorText}>No languages found.</Text>
+            ) : null}
+          </View>
         ) : fetchLangSuccess == false ? (
           <View>
             <Text style={styles.errorText}>Unable to fetch language data</Text>
@@ -124,6 +127,7 @@ export function UserInfo(props: Props) {
       <View style={styles.availabilityWindow}>
         <Text style={styles.cardTitle}>Availability</Text>
         {fetchWindowSuccess ? (
+          <View style={{alignItems: "center", justifyContent: "center", flex: 1}}>
             <TableContainer>
               <Table>
                 <TableHead>
@@ -148,6 +152,10 @@ export function UserInfo(props: Props) {
                 </TableBody>
               </Table>
             </TableContainer>
+            {availabilityWindowData.length <= 0 ? (
+              <Text style={styles.errorText}>No availability found.</Text>
+            ) : null}
+            </View>
           ) : fetchWindowSuccess == false ? (
             <View>
               <Text style={styles.errorText}>Unable to fetch availability data</Text>
@@ -194,32 +202,37 @@ export function UpcomingMeetings(props: Props) {
       <Text style={styles.cardTitle}>User: {props.user.username}</Text>
       <Text style={styles.cardTitle}>Upcoming Meetings</Text>
       {fetchMeetingSuccess ? (
-        <TableContainer>
-          <Table>
-            <TableHead>
-              <TableRow>
-                <TableCell align="center">Date</TableCell>
-                <TableCell align="center">Time</TableCell>
-                <TableCell align="center">Location</TableCell>
-                <TableCell align="center">Language</TableCell>
-              </TableRow>
-            </TableHead>
-            <TableBody>
-              {upcomingMeetingData.map((mtg: Meeting) => {
-                return (
-                  <TableRow
-                    key={mtg.date + mtg.location + mtg.language + mtg.time}
-                  >
-                    <TableCell align="center">{mtg.date}</TableCell>
-                    <TableCell align="center">{mtg.time}</TableCell>
-                    <TableCell align="center">{mtg.location}</TableCell>
-                    <TableCell align="center">{mtg.language}</TableCell>
-                  </TableRow>
-                );
-              })}
-            </TableBody>
-          </Table>
-        </TableContainer>
+        <View style={{alignItems: "center", justifyContent: "center", flex: 1}}>
+          <TableContainer>
+            <Table>
+              <TableHead>
+                <TableRow>
+                  <TableCell align="center">Date</TableCell>
+                  <TableCell align="center">Time</TableCell>
+                  <TableCell align="center">Location</TableCell>
+                  <TableCell align="center">Language</TableCell>
+                </TableRow>
+              </TableHead>
+              <TableBody>
+                {upcomingMeetingData.map((mtg: Meeting) => {
+                  return (
+                    <TableRow
+                      key={mtg.date + mtg.location + mtg.language + mtg.time}
+                    >
+                      <TableCell align="center">{mtg.date}</TableCell>
+                      <TableCell align="center">{mtg.time}</TableCell>
+                      <TableCell align="center">{mtg.location}</TableCell>
+                      <TableCell align="center">{mtg.language}</TableCell>
+                    </TableRow>
+                  );
+                })}
+              </TableBody>
+            </Table>
+          </TableContainer>
+          {upcomingMeetingData.length <= 0 ? (
+            <Text style={styles.errorText}>No meetings found.</Text>
+          ) : null}
+        </View>
       ) : fetchMeetingSuccess == false ? (
         <Text style={styles.errorText}>Unable to fetch meeting data</Text>
       ) : (
