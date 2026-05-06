@@ -2,8 +2,14 @@ import { useEffect, useState } from "react";
 import { Pressable, View, Text, StyleSheet } from "react-native";
 import tinycolor from "tinycolor2";
 import { router } from "expo-router";
-import { dbGetWindows, UserData, AvailabilityWindow, Speaks, dbGetSpeaks } from "../utils/api"
+import { dbGetWindows, UserData, AvailabilityWindow, Speaks, dbGetSpeaks, dbGetMeetings, Meeting } from "../utils/api"
 import dayjs from "dayjs";
+import utc from "dayjs/plugin/utc";
+import tz from "dayjs/plugin/timezone";
+
+// Dayjs setup
+dayjs.extend(utc); // Enable UTC extension
+dayjs.extend(tz); // Enable timezone extension
 
 const PRIMARY_COLOR = "#5050d9";
 
@@ -108,7 +114,29 @@ export function UserInfo(props: Props) {
 }
 
 export function UpcomingMeetings(props: Props) {
-  const [upcomingMeetingData, setUpcomingMeetingData] = useState([{}, {}, {}]);
+  const [upcomingMeetingData, setUpcomingMeetingData] = useState<Meeting[]>([]);
+
+  useEffect(() => {
+    dbGetMeetings(props.user.id)
+    .then((res) => {
+      const mtgs: Meeting[] = [];
+      for (const row of res) {
+        mtgs.push({
+          // We convert to UTC because we don't want dayjs applying
+          // any weird timezone changes. Currently only America/Chicago is supported.
+          date: dayjs(row[0]).utc().format("YYYY-MM-DD"),
+          time: dayjs(row[1]).utc().format("HH:mm A"),
+          location: row[2],
+          language: row[3]
+        })
+      }
+      setUpcomingMeetingData(mtgs); 
+    })
+    .catch((e) => {
+      console.error("Unable to fetch upcoming meetings", e);
+      setUpcomingMeetingData([]);
+    });
+  }, [])
 
   return (
     <View style={styles.upcomingMeetingWindow}>
@@ -117,8 +145,11 @@ export function UpcomingMeetings(props: Props) {
       <Text>Date | Time | Location | Language</Text>
       {upcomingMeetingData.map((mtg, index, array) => {
         return (
-          <View style={styles.listItemContainer}>
-            <Text>Meeting</Text>
+          <View style={styles.listItemContainer} key={mtg.date + mtg.location + mtg.language + mtg.time}>
+            <Text>{mtg.date} | </Text>
+            <Text>{mtg.time} | </Text>
+            <Text>{mtg.location} | </Text>
+            <Text>{mtg.language}</Text>
           </View>
         );
       })}

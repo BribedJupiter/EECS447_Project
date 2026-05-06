@@ -7,6 +7,13 @@ import dayjs from "dayjs";
 import { styles } from "./dashboard";
 import { router } from "expo-router";
 
+import utc from "dayjs/plugin/utc";
+import tz from "dayjs/plugin/timezone";
+
+// Dayjs setup
+dayjs.extend(utc); // Enable UTC extension
+dayjs.extend(tz); // Enable timezone extension
+
 export default function MeetingScheduler() {
     const [matchAvailability, setMatchAvailability] = useState(false);
     const [skillLow, setSkillLow] = useState(0);

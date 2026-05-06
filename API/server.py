@@ -8,7 +8,8 @@ import os
 from dbconn import (db_test_conn, db_setup, db_get_user, db_put_user, db_get_user_by_username, 
                     db_create_window, db_get_windows, db_set_languages, db_get_langs,
                     db_create_speaks, db_get_speaks, db_get_matching_users,
-                    db_resize_window_subsection, db_schedule_meeting)
+                    db_resize_window_subsection, db_schedule_meeting,
+                    db_get_meetings)
 
 # Load environment variables
 load_dotenv() # Get .env file variables
@@ -127,6 +128,17 @@ def schedule_meeting(user_id1, user_id2):
         }), 200
     except Exception as e:
         print("ERROR:", e)
+        return {"error": "unknown"}, 500
+    
+@app.route("/schedule/meetings/<int:user_id>")
+def get_meetings(user_id):
+    try:
+        result = db_get_meetings(user_id)
+        if result is None or result == []:
+            return jsonify([])
+        return jsonify(result)
+    except Exception as e:
+        print("ERROR", e)
         return {"error": "unknown"}, 500
 
 #####################################################

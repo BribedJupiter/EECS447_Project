@@ -201,6 +201,21 @@ def db_set_attends_data(cursor, user_id, mtg_id):
         (user_id, mtg_id)
     )
 
+def db_get_meetings(user_id):
+    return db_run_query(db_get_meetings_data, user_id)
+
+def db_get_meetings_data(conn, user_id):
+    """Get all meetings for a particular user by their user_id."""
+    cur = conn.cursor()
+    cur.execute("SELECT m.date, m.time, m.location, m.language_name " \
+                "FROM Meeting m " \
+                "INNER JOIN Attends a ON a.meeting_id=m.id " \
+                "WHERE a.user_id=%s;"
+                , (user_id,))
+    result = cur.fetchall()
+    cur.close()
+    return result
+
 #####################################################
 #       Availability Window Functions               #
 #####################################################

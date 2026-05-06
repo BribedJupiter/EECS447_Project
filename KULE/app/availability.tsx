@@ -7,6 +7,12 @@ import dayjs from "dayjs";
 import { dbCreateWindow, getStoredUserID } from "@/utils/api";
 import {router} from "expo-router";
 import { styles } from "./dashboard";
+import utc from "dayjs/plugin/utc";
+import tz from "dayjs/plugin/timezone";
+
+// Dayjs setup
+dayjs.extend(utc); // Enable UTC extension
+dayjs.extend(tz); // Enable timezone extension
 
 export default function AddAvailability() {
     const [date, setDate] = useState(dayjs('2026-01-01'));
@@ -26,6 +32,7 @@ export default function AddAvailability() {
                 <Button onClick={() => router.replace("/dashboard")}>Back</Button>
                 <Button onClick={() => {
                     // Get our final start and end time objects. Date is fine as is.
+                    // Convert to UTC to put in the database
                     const start = date.hour(startTime.hour()).minute(startTime.minute()).format('YYYY-MM-DDTHH:mm');
                     const end = date.hour(endTime.hour()).minute(endTime.minute()).format('YYYY-MM-DDTHH:mm');
                     const dateStr = date.format('YYYY-MM-DD');

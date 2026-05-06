@@ -35,6 +35,13 @@ export interface ScheduleOption {
     id?: number,
 }
 
+export interface Meeting {
+    date: string,
+    time: string,
+    location: string,
+    language: string,
+}
+
 export async function getStoredUserID() {
     const userData = sessionStorage.getItem("user");
     if (!userData) {
@@ -120,6 +127,17 @@ export async function dbScheduleMeeting(user_id1: number, user_id2: number, date
     })
     if (!res.ok) {
         throw new Error(`Failed to schedule meeting window - ${res.status}`);
+    }
+    return res.json();
+}
+
+export async function dbGetMeetings(user_id: number) {
+    // Get matching user data
+    const res = await fetch(`${API_URL}/schedule/meetings/${user_id}`, {
+        method: "GET",
+    })
+    if (!res.ok) {
+        throw new Error(`Failed to find meetings - ${res.status}`);
     }
     return res.json();
 }
