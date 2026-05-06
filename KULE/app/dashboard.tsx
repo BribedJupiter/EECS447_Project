@@ -1,17 +1,18 @@
-import { useEffect, useState } from "react";
-import { Pressable, View, Text, StyleSheet } from "react-native";
+import { useEffect, useState, Fragment } from "react";
+import { Pressable, View, Text, StyleSheet, ActivityIndicator } from "react-native";
 import tinycolor from "tinycolor2";
 import { router } from "expo-router";
 import { dbGetWindows, UserData, AvailabilityWindow, Speaks, dbGetSpeaks, dbGetMeetings, Meeting } from "../utils/api"
 import dayjs from "dayjs";
 import utc from "dayjs/plugin/utc";
 import tz from "dayjs/plugin/timezone";
+import { Table, TableContainer, TableHead, TableRow, TableBody, TableCell, Button } from "@mui/material";
 
 // Dayjs setup
 dayjs.extend(utc); // Enable UTC extension
 dayjs.extend(tz); // Enable timezone extension
 
-const PRIMARY_COLOR = "#5050d9";
+export const PRIMARY_COLOR = "#5050d9";
 
 interface Props {
     user: UserData
@@ -20,6 +21,8 @@ interface Props {
 export function UserInfo(props: Props) {
   const [availabilityWindowData, setAvailabilityWindowData] = useState<AvailabilityWindow[]>([]);
   const [speaksData, setSpeaksData] = useState<Speaks[]>([]);
+  const [fetchWindowSuccess, setFetchWindowSuccess] = useState<boolean | null>(null);
+  const [fetchLangSuccess, setFetchLangSuccess] = useState<boolean | null>(null);
 
   // fetch needed data
   useEffect(() => {
@@ -35,9 +38,11 @@ export function UserInfo(props: Props) {
         })
       }
       setAvailabilityWindowData(windows);
+      setFetchWindowSuccess(true);
     }).catch((e) => {
       console.error("Unable to fetch availability window data", e);
       setAvailabilityWindowData([]);
+      setFetchWindowSuccess(false);
     });
 
     dbGetSpeaks(props.user.id).then((data: any[]) => {
@@ -50,9 +55,11 @@ export function UserInfo(props: Props) {
         })
       }
       setSpeaksData(speaks);
+      setFetchLangSuccess(true);
     }).catch((e) => {
       console.error("Unable to fetch availability window data", e);
       setSpeaksData([]);
+      setFetchLangSuccess(false);
     });
   }, [])
 
@@ -73,41 +80,82 @@ export function UserInfo(props: Props) {
         </View>
 
         {/* User Language Skills Box */}
-        <View>
-          <Text>Language | Native or Studying | Skill Level</Text>
-          {speaksData.map((s: Speaks, index, array) => {
-            return (
-              <View
-                style={styles.listItemContainer}
-                key={s.language + s.type + s.skill}
-              >
-                <Text>{s.language} | </Text>
-                <Text>{s.type} | </Text>
-                <Text>{s.skill}</Text>
-              </View>
-            );
-          })}
+        <View style={styles.languageWindow}>
+            <Text style={styles.cardTitle}>Languages Spoken</Text>
+        {fetchLangSuccess ? (
+          <Fragment>
+            <TableContainer>
+              <Table>
+                <TableHead>
+                  <TableRow>
+                    <TableCell align="center">Language</TableCell>
+                    <TableCell align="center">Native or Studying</TableCell>
+                    <TableCell align="center">Skill Level</TableCell>
+                  </TableRow>
+                </TableHead>
+                <TableBody>
+                  {speaksData.map((s: Speaks) => {
+                    return (
+                      <TableRow
+                        key={s.language + s.type + s.skill}
+                      >
+                        <TableCell align="center">{s.language}</TableCell>
+                        <TableCell align="center">{s.type}</TableCell>
+                        <TableCell align="center">{s.skill}</TableCell>
+                      </TableRow>
+                    );
+                  })}
+                </TableBody>
+              </Table>
+            </TableContainer>
+          </Fragment>
+        ) : fetchLangSuccess == false ? (
+          <View>
+            <Text style={styles.errorText}>Unable to fetch language data</Text>
+          </View>
+        ) : (
+          <ActivityIndicator />
+        )}
+          <Pressable onPress={() => {router.replace("/speaks")}}><Text style={styles.actionButtonText}>Add Language</Text></Pressable>
         </View>
       </View>
-      <Pressable onPress={() => {router.replace("/speaks")}}><Text style={styles.actionButtonText}>Add Language</Text></Pressable>
 
       {/* User Availability box */}
-      <View>
+      <View style={styles.availabilityWindow}>
         <Text style={styles.cardTitle}>Availability</Text>
-        <Text>Date | Start Time | End Time</Text>
-        {availabilityWindowData.map((w: AvailabilityWindow, i, arr) => {
-          return (
-            <View
-                style={styles.listItemContainer}
-                key={w.date.toString() + w.start_time.toString() + w.end_time.toString()}
-              >
-                <Text>{w.date.format('YYYY-MM-DD').toString()} | </Text>
-                <Text>{w.start_time.format('h:mm A').toString()} | </Text>
-                <Text>{w.end_time.format('h:mm A').toString()}</Text>
-              </View>
-          );
-        })}
-        <Pressable onPress={() => router.push("/availability")}><Text style={styles.actionButtonText}>Add New Availability Window</Text></Pressable>
+        {fetchWindowSuccess ? (
+            <TableContainer>
+              <Table>
+                <TableHead>
+                  <TableRow>
+                    <TableCell align="center">Date</TableCell>
+                    <TableCell align="center">Start Time</TableCell>
+                    <TableCell align="center">End Time</TableCell>
+                  </TableRow>
+                </TableHead>
+                <TableBody>
+                  {availabilityWindowData.map((w: AvailabilityWindow) => {
+                    return (
+                      <TableRow
+                        key={w.date.toString() + w.start_time.toString() + w.end_time.toString()}
+                      >
+                        <TableCell align="center">{w.date.format('YYYY-MM-DD').toString()}</TableCell>
+                        <TableCell align="center">{w.start_time.format('h:mm A').toString()}</TableCell>
+                        <TableCell align="center">{w.end_time.format('h:mm A').toString()}</TableCell>
+                      </TableRow>
+                    );
+                  })}
+                </TableBody>
+              </Table>
+            </TableContainer>
+          ) : fetchWindowSuccess == false ? (
+            <View>
+              <Text style={styles.errorText}>Unable to fetch availability data</Text>
+            </View>
+          ) : (
+            <ActivityIndicator />
+          )}
+          <Pressable onPress={() => router.push("/availability")}><Text style={styles.actionButtonText}>Add New Availability Window</Text></Pressable>
       </View>
     </View>
   );
@@ -115,6 +163,7 @@ export function UserInfo(props: Props) {
 
 export function UpcomingMeetings(props: Props) {
   const [upcomingMeetingData, setUpcomingMeetingData] = useState<Meeting[]>([]);
+  const [fetchMeetingSuccess, setFetchMeetingSuccess] = useState<Boolean | null>(null);
 
   useEffect(() => {
     dbGetMeetings(props.user.id)
@@ -131,10 +180,12 @@ export function UpcomingMeetings(props: Props) {
         })
       }
       setUpcomingMeetingData(mtgs); 
+      setFetchMeetingSuccess(true);
     })
     .catch((e) => {
       console.error("Unable to fetch upcoming meetings", e);
       setUpcomingMeetingData([]);
+      setFetchMeetingSuccess(false);
     });
   }, [])
 
@@ -142,17 +193,38 @@ export function UpcomingMeetings(props: Props) {
     <View style={styles.upcomingMeetingWindow}>
       <Text style={styles.cardTitle}>User: {props.user.username}</Text>
       <Text style={styles.cardTitle}>Upcoming Meetings</Text>
-      <Text>Date | Time | Location | Language</Text>
-      {upcomingMeetingData.map((mtg, index, array) => {
-        return (
-          <View style={styles.listItemContainer} key={mtg.date + mtg.location + mtg.language + mtg.time}>
-            <Text>{mtg.date} | </Text>
-            <Text>{mtg.time} | </Text>
-            <Text>{mtg.location} | </Text>
-            <Text>{mtg.language}</Text>
-          </View>
-        );
-      })}
+      {fetchMeetingSuccess ? (
+        <TableContainer>
+          <Table>
+            <TableHead>
+              <TableRow>
+                <TableCell align="center">Date</TableCell>
+                <TableCell align="center">Time</TableCell>
+                <TableCell align="center">Location</TableCell>
+                <TableCell align="center">Language</TableCell>
+              </TableRow>
+            </TableHead>
+            <TableBody>
+              {upcomingMeetingData.map((mtg: Meeting) => {
+                return (
+                  <TableRow
+                    key={mtg.date + mtg.location + mtg.language + mtg.time}
+                  >
+                    <TableCell align="center">{mtg.date}</TableCell>
+                    <TableCell align="center">{mtg.time}</TableCell>
+                    <TableCell align="center">{mtg.location}</TableCell>
+                    <TableCell align="center">{mtg.language}</TableCell>
+                  </TableRow>
+                );
+              })}
+            </TableBody>
+          </Table>
+        </TableContainer>
+      ) : fetchMeetingSuccess == false ? (
+        <Text style={styles.errorText}>Unable to fetch meeting data</Text>
+      ) : (
+        <ActivityIndicator />
+      )}
       <Pressable onPress={() => router.push("/schedule")}><Text style={styles.actionButtonText}>Schedule New Meeting</Text></Pressable>
     </View>
   );
@@ -187,7 +259,7 @@ export default function Dashboard() {
       }}
     >
         {!user ? (
-            <Pressable onPress={() => router.replace("/")}><Text>Please login or register here</Text></Pressable>
+            <Button style={{margin: 10}} variant="contained" onClick={() => router.replace("/")}>Please login or register here</Button>
         ) : (
             <>
                 <UpcomingMeetings user={user} />
@@ -221,9 +293,33 @@ export const styles = StyleSheet.create({
     fontWeight: "bold"
   },
   upcomingMeetingWindow: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
     padding: 15
   },
   userWindow: {
     padding: 15
+  },
+  languageWindow: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    padding: 15
+  },
+  availabilityWindow: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    padding: 15
+  },
+  errorText: {
+    color: tinycolor("red").toHexString(),
+    fontWeight: "bold"
+  },
+  loadingView: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center"
   }
 });

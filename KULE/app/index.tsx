@@ -2,6 +2,9 @@ import { router } from "expo-router";
 import { useEffect, useState } from "react";
 import { View, Text, TextInput, Pressable } from "react-native";
 import { checkUserExists, dbGetUserByUsername, dbPutUser } from "@/utils/api";
+import { styles, PRIMARY_COLOR } from "./dashboard";
+import tinycolor from "tinycolor2";
+import { Button, TextField } from "@mui/material"
 
 const MAX_STRING_LENGTH = 50;
 const DEFAULT_USERNAME = "Enter your username";
@@ -23,6 +26,7 @@ function Register({setMode}: Props) {
   return (
     <View>
       <Text>Register</Text>
+      <TextField></TextField>
       <TextInput onChangeText={setUsernameText} maxLength={MAX_STRING_LENGTH} value={usernameText}></TextInput>
       <TextInput onChangeText={setNameText} maxLength={MAX_STRING_LENGTH}  value={nameText}></TextInput>
       <TextInput onChangeText={setEmailText} maxLength={MAX_STRING_LENGTH}  value={emailText}></TextInput>
@@ -63,7 +67,7 @@ function Register({setMode}: Props) {
           }
         });
       }}><Text>Submit</Text></Pressable>
-      <Text>{errorText.length > 0 ? "Error: " + errorText : ""}</Text>
+      <Text style={styles.errorText}>{errorText.length > 0 ? "Error: " + errorText : ""}</Text>
       <Pressable onPress={() => setMode("login")}><Text>Login Instead</Text></Pressable>
     </View>
   );
@@ -90,7 +94,7 @@ function Login({setMode}: Props) {
         });
         // router.replace("/dashboard");
       }}><Text>Submit</Text></Pressable>
-      <Text>{errorText.length > 0 ? "Error: " + errorText : ""}</Text>
+      <Text style={styles.errorText}>{errorText.length > 0 ? "Error: " + errorText : ""}</Text>
       <Pressable onPress={() => setMode("register")}><Text>Register Instead</Text></Pressable>
     </View>
   );
@@ -109,15 +113,27 @@ export default function Index() {
   }, [])
 
   return (
-    <View>
+    <View
+      style={{
+        flex: 1,
+        justifyContent: "center",
+        alignItems: "center"
+      }}
+    >
+      <Text style={styles.cardTitle}>Welcome to The KU Language Exchange</Text>
+      <Text style={{fontStyle: "italic"}}>Also known as KULE</Text>
       {mode == "login" ? (
         <Login setMode={setModeCallback}/>
       ) : mode == "register" ? (
         <Register setMode={setModeCallback}/>
       ) : (
         <>
-          <Pressable onPress={() => setMode("login")}><Text>Login</Text></Pressable>
-          <Pressable onPress={() => setMode("register")}><Text>Register</Text></Pressable>
+        <View>
+          <Button style={{margin: 10}} variant="contained" onClick={() => setMode("login")}>Login</Button>
+        </View>
+        <View>
+          <Button style={{margin: 10}} variant="contained" onClick={() => setMode("register")}>Register</Button>
+        </View>
         </>
       )}
     </View>

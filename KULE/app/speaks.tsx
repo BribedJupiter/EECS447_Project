@@ -11,26 +11,30 @@ export default function SpeaksForm() {
     const [language, setLanguage] = useState("English");
     const [langList, setLangList] = useState([]);
     const [errorText, setErrorText] = useState("");
+    const [fetchSuccess, setFetchSuccess] = useState<Boolean | null>(null);
 
     // Load language data
     useEffect(() => {
         dbGetLanguages()
             .then((res) => {
                 setLangList(res);
+                setFetchSuccess(true);
             })
             .catch((e) => {
                 setLangList([]);
+                setFetchSuccess(false);
             })
     }, []);
 
-    return (langList.length <= 0 ? <ActivityIndicator></ActivityIndicator> : 
-        <View>
-            <Text>Add a language!</Text>
-            <FormControl fullWidth>
+    return (fetchSuccess ? (
+        <View style={{alignItems: "center", justifyContent: "center", flex: 1}}>
+            <Text style={styles.cardTitle}>Add a language</Text>    
+            <FormControl margin="normal" style={{minWidth: 220}}>
                 <InputLabel id="select-lang-label">Language</InputLabel>
                 <Select
                     id="select-lang"
                     labelId="select-lang-label"
+                    label="Language"
                     value={language}
                     onChange={(v) => {  
                         setLanguage(v.target.value);
@@ -39,29 +43,31 @@ export default function SpeaksForm() {
                     <MenuItem value="English">English</MenuItem>
                     {langList.filter((l) => {return l !== "English"}).map((l) => {
                         return (
-                            <MenuItem value={l}>{l}</MenuItem>
+                            <MenuItem key={l} value={l}>{l}</MenuItem>
                         );
                     })}
                 </Select>
             </FormControl>
-            <FormControl fullWidth>
+            <FormControl margin="normal" style={{minWidth: 220}}>
                 <InputLabel id="select-native-studying-label">Goal</InputLabel>
                 <Select
                     id="select-native-studying"
                     labelId="select-native-studying-label"
                     value={goal}
+                    label="Goal"
                     onChange={(v) => {setGoal(v.target.value)}}
                 >
                     <MenuItem value={"Studying"}>Studying</MenuItem>
                     <MenuItem value={"Native"}>Native</MenuItem>
                 </Select>
             </FormControl>
-            <FormControl fullWidth>
+            <FormControl margin="normal" style={{minWidth: 220}}>
                 <InputLabel id="select-skill-label">Skill Level</InputLabel>
                 <Select
                     id="select-skill"
                     labelId="select-skill-label"
                     value={skill}
+                    label="Skill Level"
                     onChange={(v) => {
                         if (!isNaN(Number(v.target.value))) {
                             setSkill(Number(v.target.value));
@@ -81,7 +87,8 @@ export default function SpeaksForm() {
                     <MenuItem value={10}>10</MenuItem>
                 </Select>
             </FormControl>
-            <View style={styles.actionButtonRow}>
+            <Text style={styles.errorText}>{errorText.length > 0 ? "Error: " + errorText : ""}</Text>
+            <View style={{flexDirection: "row"}}>
                 <Button onClick={() => router.replace("/dashboard")}>Back</Button>
                 <Button onClick={() => {
                     // Make API call
@@ -90,10 +97,13 @@ export default function SpeaksForm() {
                         if (!user_id) {
                             setErrorText("Try logging in again.");
                         } else {
-                            dbCreateSpeaks(user_id, language, goal, skill).catch((e) => { 
-                                setErrorText("Unable to create window. Maybe you have a duplicate?");
+                            dbCreateSpeaks(user_id, language, goal, skill)
+                            .then((res) => {
+                                router.replace("/dashboard");
+                            })
+                            .catch((e) => { 
+                                setErrorText("Unable to add language. Maybe you have a duplicate?");
                             });
-                            router.replace("/dashboard");
                         }
                     }
                     ).catch((e) => {
@@ -102,7 +112,24 @@ export default function SpeaksForm() {
                     });
                 }}>Submit</Button>
             </View>
-            <Text>{errorText.length > 0 ? "Error: " + errorText : ""}</Text>
         </View>
-    );
+    ) : fetchSuccess == false ? (
+        <View
+            style={{
+                flex: 1,
+                justifyContent: "center",
+                alignItems: "center",
+                gap: 5
+            }}
+        >
+            <Text style={styles.errorText}>Unable to fetch from server</Text>
+            <Button variant="contained" onClick={() => router.replace("/dashboard")}>Return to Dashboard</Button>
+        </View>
+    ) : (
+        <View
+            style={styles.loadingView}
+        >
+            <ActivityIndicator />
+        </View>
+    ));
 }

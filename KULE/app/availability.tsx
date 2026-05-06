@@ -2,7 +2,7 @@ import { useState } from "react";
 import { View, Text } from "react-native";
 import { DesktopDatePicker, DesktopTimePicker, LocalizationProvider } from "@mui/x-date-pickers";
 import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
-import { Button } from "@mui/material";
+import { Button, Box } from "@mui/material";
 import dayjs from "dayjs";
 import { dbCreateWindow, getStoredUserID } from "@/utils/api";
 import {router} from "expo-router";
@@ -15,22 +15,64 @@ dayjs.extend(utc); // Enable UTC extension
 dayjs.extend(tz); // Enable timezone extension
 
 export default function AddAvailability() {
-    const [date, setDate] = useState(dayjs('2026-01-01'));
-    const [startTime, setStartTime] = useState(dayjs('2026-01-01T15:30'));
-    const [endTime, setEndTime] = useState(dayjs('2026-01-01T18:30'));
+    const [date, setDate] = useState<dayjs.Dayjs | undefined>();
+    const [startTime, setStartTime] = useState<dayjs.Dayjs | undefined>();
+    const [endTime, setEndTime] = useState<dayjs.Dayjs | undefined>();
     const [errorText, setErrorText] = useState("");
 
     return (
-        <View>
-            <Text>Add Availability</Text>
+        <View
+            style={{
+                flex: 1,
+                alignItems: "center",
+                justifyContent: "center"
+            }}
+        >
+            <Text style={styles.cardTitle}>Add Availability</Text>
             <LocalizationProvider dateAdapter={AdapterDayjs}>
-                <DesktopDatePicker label="Pick a date" value={date} onChange={(t) => {setDate(dayjs(t))}}/>
-                <DesktopTimePicker label="Pick a start time" value={startTime} onChange={(t) => {setStartTime(dayjs(t))}}/>
-                <DesktopTimePicker label="Pick an end time" value={endTime} onChange={(t) => {setEndTime(dayjs(t))}}/>
+                <Box sx={{marginTop: 2}}>
+                    <DesktopDatePicker slotProps={{
+                        actionBar: {actions: ['clear']},
+                    }} label="Pick a date" value={date} onChange={(t) => {
+                        if (!t) {
+                            setDate(undefined);
+                        } else {
+                            setDate(dayjs(t))
+                        }
+                    }}/>
+                </Box>
+                <Box sx={{marginTop: 2}}>
+                    <DesktopTimePicker slotProps={{
+                        actionBar: {actions: ['cancel', 'accept']}
+                    }} label="Pick a start time" value={startTime} onChange={(t) => {
+                        if (!t) {
+                            setStartTime(undefined);
+                        } else {
+                            setStartTime(dayjs(t))
+                        }
+                    }}/>
+                </Box>
+                <Box sx={{marginTop: 2}}>
+                    <DesktopTimePicker slotProps={{
+                        actionBar: {actions: ['cancel', 'accept']}
+                    }}label="Pick an end time" value={endTime} onChange={(t) => {
+                        if (!t) {
+                            setEndTime(undefined);
+                        } else {
+                            setEndTime(dayjs(t))
+                        }
+                    }}/>
+                </Box>
             </LocalizationProvider>
-            <View style={styles.actionButtonRow}>
+            <Text style={styles.errorText}>{errorText.length > 0 ? "Error: " + errorText : ""}</Text>
+            <View style={{flexDirection: "row"}}>
                 <Button onClick={() => router.replace("/dashboard")}>Back</Button>
                 <Button onClick={() => {
+                    if (!date || !startTime || !endTime) {
+                        setErrorText("Please enter valid dates and times for all fields.");
+                        return;
+                    }
+
                     // Get our final start and end time objects. Date is fine as is.
                     // Convert to UTC to put in the database
                     const start = date.hour(startTime.hour()).minute(startTime.minute()).format('YYYY-MM-DDTHH:mm');
@@ -49,10 +91,13 @@ export default function AddAvailability() {
                         if (!user_id) {
                             setErrorText("Try logging in again.");
                         } else {
-                            dbCreateWindow(user_id, dateStr, start, end).catch((e) => { 
+                            dbCreateWindow(user_id, dateStr, start, end)
+                            .then((res) => {
+                                router.replace("/dashboard");
+                            })
+                            .catch((e) => { 
                                 setErrorText("Unable to create window. Maybe you have a duplicate?");
                             });
-                            router.replace("/dashboard");
                         }
                     }
                     ).catch((e) => {
@@ -61,7 +106,6 @@ export default function AddAvailability() {
                     });
                 }}>Submit</Button>
             </View>
-            <Text>{errorText.length > 0 ? "Error: " + errorText : ""}</Text>
         </View>
     );
 }

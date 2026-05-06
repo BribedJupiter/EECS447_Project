@@ -60,7 +60,7 @@ def get_langs():
 @app.route("/language/<int:user_id>")
 def get_speaks(user_id):
     result = db_get_speaks(user_id)
-    if result is None or len(result) <= 0:
+    if result is None:
         return {"error": "user not found"}, 404
     return jsonify(result), 200
 
@@ -180,7 +180,7 @@ def resize_window_subsection(user_id):
 @app.route("/availability/<int:user_id>")
 def get_windows(user_id):
     result = db_get_windows(user_id)
-    if result is None or len(result) <= 0:
+    if result is None:
         return {"error": "user not found"}, 404
     dataArr = []
     for i in result:
