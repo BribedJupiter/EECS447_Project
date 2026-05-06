@@ -1,7 +1,7 @@
 import dayjs from "dayjs";
 
-const API_URL = "https://project-ks2el.vercel.app"
-// const API_URL = "http://127.0.0.1:8000"
+// const API_URL = "https://project-ks2el.vercel.app"
+const API_URL = "http://127.0.0.1:8000"
 
 export interface UserData {
     id: number,
@@ -101,6 +101,25 @@ export async function dbFindUsers(user_id: number, lang: string, low_skill: numb
     })
     if (!res.ok) {
         throw new Error(`Failed to create availability window - ${res.status}`);
+    }
+    return res.json();
+}
+
+export async function dbScheduleMeeting(user_id1: number, user_id2: number, date: string, start_time: string, location: string, language: string) {
+    const res = await fetch(`${API_URL}/schedule/${user_id1}/${user_id2}`, {
+        method: "PUT",
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+            date: date,
+            start_time: start_time,
+            location: location,
+            language: language
+        })
+    })
+    if (!res.ok) {
+        throw new Error(`Failed to schedule meeting window - ${res.status}`);
     }
     return res.json();
 }

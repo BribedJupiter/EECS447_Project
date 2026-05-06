@@ -161,6 +161,46 @@ def db_get_matching_users_data(conn, user_id, lang, low_skill, high_skill, useAv
     finally:
         cur.close()
 
+def db_schedule_meeting(user_id1, user_id2, date, start_time, location, language_name):
+    return db_run_query(db_schedule_meeting_data, user_id1, user_id2, date, start_time, location, language_name)
+
+def db_schedule_meeting_data(conn, user_id1, user_id2, date, start_time, location, language_name):
+    """A wrapper function for meeting scheduling so that we can wrap it all in a single transaction"""
+    cur = conn.cursor()
+    try:
+        cur.execute("START TRANSACTION;")
+        mtg_id = db_set_meeting_data(cur, date, start_time, location, language_name)
+        db_set_attends_data(cur, user_id1, mtg_id)
+        db_set_attends_data(cur, user_id2, mtg_id)
+        cur.execute("COMMIT;")
+        return True
+    except Exception as e:
+        cur.execute("ROLLBACK;")
+        print("INSERT Error", e)
+        return False
+    finally:
+        cur.close()
+
+def db_set_meeting_data(cursor, date, start_time, location, language_name):
+    """Schedule a meeting according to relevant meeting data."""
+    # NOTE: the caller will handle transaction management, errors, and the cursor in this particular use-case
+    cursor.execute(
+        "INSERT INTO Meeting (date, time, location, language_name) " \
+        "VALUES (%s, %s, %s, %s);",
+        (date, start_time, location, language_name)
+    )
+    mtg_id = cursor.lastrowid
+    return mtg_id
+
+def db_set_attends_data(cursor, user_id, mtg_id):
+    """Store the fact that a user is attending a particular meeting."""
+    # NOTE: the caller will handle transaction management, errors, and the cursor in this particular use-case
+    cursor.execute(
+        "INSERT INTO Attends (user_id, meeting_id) " \
+        "VALUES (%s, %s);",
+        (user_id, mtg_id)
+    )
+
 #####################################################
 #       Availability Window Functions               #
 #####################################################

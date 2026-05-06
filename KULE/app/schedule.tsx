@@ -1,7 +1,7 @@
 import { FormControl, InputLabel, MenuItem, Select, Button, Checkbox, FormControlLabel, Divider } from "@mui/material";
 import { View, Text, ActivityIndicator } from "react-native";
 import { useEffect, useState } from "react";
-import { dbFindUsers, dbGetLanguages, getStoredUserID } from "@/utils/api";
+import { dbFindUsers, dbGetLanguages, dbScheduleMeeting, getStoredUserID } from "@/utils/api";
 import { ScheduleOption, dbResizeWindow } from "../utils/api";
 import dayjs from "dayjs";
 import { styles } from "./dashboard";
@@ -237,10 +237,13 @@ export default function MeetingScheduler() {
                                                     return;
                                                 }).then(() => {
                                                     // Now, we add to the Meeting table
-                                                    
-
-                                                    // Finally, we redirect the user back to the dashboard
-                                                    router.replace("/dashboard");
+                                                    dbScheduleMeeting(user_id, s.id!, dateStr, start, meetingLocation, language)
+                                                    .then((res) => {
+                                                        // Finally, we redirect the user back to the dashboard
+                                                        router.replace("/dashboard");
+                                                    }).catch((e) => {
+                                                        setErrorText("Failed to schedule meeting. Retry?")
+                                                    })
                                                 });
                                             });
                                         }

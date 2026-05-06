@@ -8,7 +8,7 @@ import os
 from dbconn import (db_test_conn, db_setup, db_get_user, db_put_user, db_get_user_by_username, 
                     db_create_window, db_get_windows, db_set_languages, db_get_langs,
                     db_create_speaks, db_get_speaks, db_get_matching_users,
-                    db_resize_window_subsection)
+                    db_resize_window_subsection, db_schedule_meeting)
 
 # Load environment variables
 load_dotenv() # Get .env file variables
@@ -114,23 +114,17 @@ def get_matching_users(user_id):
         print("ERROR:", e)
         return {"error": "unknown"}, 500
     
-@app.route("/schedule/<int:user_id1>/<int:user_id2>")
+@app.route("/schedule/<int:user_id1>/<int:user_id2>", methods=["PUT"])
 def schedule_meeting(user_id1, user_id2):
     try:
         data = request.get_json() or {}
         # Add meeting to meeting, get back meeting_id
-        # Then set attends for both users
-        reuslt = None
-        if result is None:
-            return {"error": "failed to insert row"}, 500
-        else:
-            return jsonify({
-                "id": result[0],
-                "username": result[1],
-                "name": result[2],
-                "email": result[3],
-                "phone": result[4],
-            }), 200
+        result = db_schedule_meeting(user_id1, user_id2, data.get("date"), data.get("start_time"), data.get("location"), data.get("language"))
+        if result == False:
+            return {"error": "failed to create meeting"}, 500
+        return jsonify({
+            "status": "success"
+        }), 200
     except Exception as e:
         print("ERROR:", e)
         return {"error": "unknown"}, 500
