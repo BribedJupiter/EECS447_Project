@@ -1,7 +1,7 @@
 import dayjs from "dayjs";
 
-// const API_URL = "https://project-ks2el.vercel.app"
-const API_URL = "http://127.0.0.1:8000"
+const API_URL = "https://project-ks2el.vercel.app"
+// const API_URL = "http://127.0.0.1:8000"
 
 export interface UserData {
     id: number,
