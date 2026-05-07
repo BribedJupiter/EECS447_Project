@@ -6,7 +6,7 @@ import { dbGetWindows, UserData, AvailabilityWindow, Speaks, dbGetSpeaks, dbGetM
 import dayjs from "dayjs";
 import utc from "dayjs/plugin/utc";
 import tz from "dayjs/plugin/timezone";
-import { Table, TableContainer, TableHead, TableRow, TableBody, TableCell, Button } from "@mui/material";
+import { Table, TableContainer, TableHead, TableRow, TableBody, TableCell, Button, AppBar, Toolbar } from "@mui/material";
 
 // Dayjs setup
 dayjs.extend(utc); // Enable UTC extension
@@ -18,33 +18,22 @@ interface Props {
     user: UserData
 }
 
-export function UserInfo(props: Props) {
-  const [availabilityWindowData, setAvailabilityWindowData] = useState<AvailabilityWindow[]>([]);
+function Profile(props: Props) {
+  return (
+    <View style={styles.profileWindow}>
+      <Text style={styles.cardTitle}>Profile</Text>
+      <Text>Name: {props.user.name}</Text>
+      <Text>Phone: {props.user.phone}</Text>
+      <Text>Email: {props.user.email}</Text>
+    </View>
+  );
+}
+
+function LanguageInfo(props: Props) {
   const [speaksData, setSpeaksData] = useState<Speaks[]>([]);
-  const [fetchWindowSuccess, setFetchWindowSuccess] = useState<boolean | null>(null);
   const [fetchLangSuccess, setFetchLangSuccess] = useState<boolean | null>(null);
 
-  // fetch needed data
   useEffect(() => {
-    // Load availability data
-    dbGetWindows(props.user.id).then((data: any[]) => {
-      const windows: AvailabilityWindow[] = []
-      for (const d of data) {
-        // data is a 2D array of 3 entries: date, start time, end time
-        windows.push({
-          "date": dayjs(d[0]),
-          "start_time": dayjs(d[1]),
-          "end_time": dayjs(d[2])
-        })
-      }
-      setAvailabilityWindowData(windows);
-      setFetchWindowSuccess(true);
-    }).catch((e) => {
-      console.error("Unable to fetch availability window data", e);
-      setAvailabilityWindowData([]);
-      setFetchWindowSuccess(false);
-    });
-
     dbGetSpeaks(props.user.id).then((data: any[]) => {
       const speaks: Speaks[] = []
       for (const d of data) {
@@ -64,21 +53,7 @@ export function UserInfo(props: Props) {
   }, [])
 
   return (
-    <View style={styles.userWindow}>
-      <Logout />
-      <Text style={styles.cardTitle}>Profile</Text>
-
-      {/* User Info Box */}
-      <View
-        style={styles.listItemContainer}
-      >
-        {/* User Data Box */}
-        <View>
-          <Text>Name: {props.user.name}</Text>
-          <Text>Phone: {props.user.phone}</Text>
-          <Text>Email: {props.user.email}</Text>
-        </View>
-
+      <View>  
         {/* User Language Skills Box */}
         <View style={styles.languageWindow}>
             <Text style={styles.cardTitle}>Languages Spoken</Text>
@@ -122,7 +97,37 @@ export function UserInfo(props: Props) {
           <Pressable onPress={() => {router.replace("/speaks")}}><Text style={styles.actionButtonText}>Add Language</Text></Pressable>
         </View>
       </View>
+  );
+}
 
+function AvailabilityInfo(props: Props) {
+  const [availabilityWindowData, setAvailabilityWindowData] = useState<AvailabilityWindow[]>([]);
+  const [fetchWindowSuccess, setFetchWindowSuccess] = useState<boolean | null>(null);
+
+  // fetch needed data
+  useEffect(() => {
+    // Load availability data
+    dbGetWindows(props.user.id).then((data: any[]) => {
+      const windows: AvailabilityWindow[] = []
+      for (const d of data) {
+        // data is a 2D array of 3 entries: date, start time, end time
+        windows.push({
+          "date": dayjs(d[0]),
+          "start_time": dayjs(d[1]),
+          "end_time": dayjs(d[2])
+        })
+      }
+      setAvailabilityWindowData(windows);
+      setFetchWindowSuccess(true);
+    }).catch((e) => {
+      console.error("Unable to fetch availability window data", e);
+      setAvailabilityWindowData([]);
+      setFetchWindowSuccess(false);
+    });
+  }, [])
+
+  return (
+    <View>
       {/* User Availability box */}
       <View style={styles.availabilityWindow}>
         <Text style={styles.cardTitle}>Availability</Text>
@@ -169,7 +174,7 @@ export function UserInfo(props: Props) {
   );
 }
 
-export function UpcomingMeetings(props: Props) {
+function UpcomingMeetings(props: Props) {
   const [upcomingMeetingData, setUpcomingMeetingData] = useState<Meeting[]>([]);
   const [fetchMeetingSuccess, setFetchMeetingSuccess] = useState<Boolean | null>(null);
 
@@ -199,7 +204,6 @@ export function UpcomingMeetings(props: Props) {
 
   return (
     <View style={styles.upcomingMeetingWindow}>
-      <Text style={styles.cardTitle}>User: {props.user.username}</Text>
       <Text style={styles.cardTitle}>Upcoming Meetings</Text>
       {fetchMeetingSuccess ? (
         <View style={{alignItems: "center", justifyContent: "center", flex: 1}}>
@@ -243,10 +247,10 @@ export function UpcomingMeetings(props: Props) {
   );
 }
 
-export function Logout() {
+function Logout() {
   return (
     <View>
-      <Pressable onPress={() => {router.replace("/"); sessionStorage.clear()}}><Text style={styles.actionButtonText}>Logout</Text></Pressable>
+      <Pressable onPress={() => {}}><Text style={styles.actionButtonText}>Logout</Text></Pressable>
     </View>
   );
 }
@@ -262,24 +266,45 @@ export default function Dashboard() {
     }
   }, [userData])
 
-  return (
+  return (!user ? (
     <View
       style={{
-        flex: 1,
         justifyContent: "center",
         alignItems: "center",
-        flexDirection: "row",
+        flex: 1
       }}
     >
-        {!user ? (
-            <Button style={{margin: 10}} variant="contained" onClick={() => router.replace("/")}>Please login or register here</Button>
-        ) : (
-            <>
-                <UpcomingMeetings user={user} />
-                <UserInfo user={user}/>
-            </>
-        )}
+      <Button style={{margin: 10}} variant="contained" onClick={() => router.replace("/")}>Please login or register here</Button>
     </View>
+  ) : (
+      <View>
+        <AppBar position="static">
+          <Toolbar sx={{justifyContent: "space-between"}}>
+            <Text style={styles.cardTitle}>{user.username}</Text>
+            <Button style={{color: "black"}} onClick={() => {
+              sessionStorage.clear();
+              router.replace("/");
+            }}>Logout</Button>
+          </Toolbar>
+        </AppBar>
+        <View
+          style={{
+            display: "flex",
+            flex: 1,
+            flexDirection: "row",
+            alignItems: "center",
+            justifyContent: "space-between"
+          }}
+        >
+          <UpcomingMeetings user={user} />
+          <AvailabilityInfo user={user} />
+          <View style={{flexDirection: "column", flex: 1}}>
+            <Profile user ={user}/>
+            <LanguageInfo user={user}/>
+          </View>
+        </View>
+      </View>
+  )
   );
 }
 
@@ -311,10 +336,13 @@ export const styles = StyleSheet.create({
     alignItems: "center",
     padding: 15
   },
-  userWindow: {
+  languageWindow: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
     padding: 15
   },
-  languageWindow: {
+  profileWindow: {
     flex: 1,
     justifyContent: "center",
     alignItems: "center",

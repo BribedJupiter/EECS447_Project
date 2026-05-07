@@ -10,7 +10,7 @@ const MAX_STRING_LENGTH = 50;
 const DEFAULT_USERNAME = "Enter your username";
 const DEFAULT_NAME = "Enter your name";
 const DEFAULT_EMAIL = "Enter your email";
-const DEFAULT_PHONE_TEXT = "Enter your phone number (no spaces or hyphens)";
+const DEFAULT_PHONE_TEXT = "Enter your phone number";
 
 interface Props {
   setMode: (mode: string) => void;
@@ -24,14 +24,14 @@ function Register({setMode}: Props) {
   const [errorText, setErrorText] = useState("");
 
   return (
-    <View>
-      <Text>Register</Text>
-      <TextField></TextField>
-      <TextInput onChangeText={setUsernameText} maxLength={MAX_STRING_LENGTH} value={usernameText}></TextInput>
-      <TextInput onChangeText={setNameText} maxLength={MAX_STRING_LENGTH}  value={nameText}></TextInput>
-      <TextInput onChangeText={setEmailText} maxLength={MAX_STRING_LENGTH}  value={emailText}></TextInput>
-      <TextInput onChangeText={setPhoneText} maxLength={MAX_STRING_LENGTH}  value={phoneText}></TextInput>
-      <Pressable onPress={() => {
+    <View
+      style={{gap: 2}}
+    >
+      <TextField onChange={(t) => setUsernameText(t.target.value)} variant="outlined" margin="normal" style={{minWidth: 220}} slotProps={{htmlInput: {maxLength: MAX_STRING_LENGTH}}} required value={usernameText}/>
+      <TextField onChange={(t) => setNameText(t.target.value)} variant="outlined" margin="normal" style={{minWidth: 220}} slotProps={{htmlInput: {maxLength: MAX_STRING_LENGTH}}} required value={nameText}/>
+      <TextField onChange={(t) => setEmailText(t.target.value)} variant="outlined" margin="normal" style={{minWidth: 220}} slotProps={{htmlInput: {maxLength: MAX_STRING_LENGTH}}} required value={emailText}/>
+      <TextField onChange={(t) => setPhoneText(t.target.value)} variant="outlined" margin="normal" style={{minWidth: 220}} slotProps={{htmlInput: {maxLength: MAX_STRING_LENGTH}}} helperText="Enter just numbers" required value={phoneText}/>
+      <Button variant="contained" onClick={() => {
         // Ensure we have actually edited the fields
         if (usernameText == DEFAULT_USERNAME || nameText == DEFAULT_NAME || phoneText == DEFAULT_PHONE_TEXT || emailText == DEFAULT_EMAIL) {
           setErrorText("Please provide a new value for each field");
@@ -40,7 +40,7 @@ function Register({setMode}: Props) {
 
         // Validate phone number is a number
         const phoneNum = Number(phoneText);
-        if (isNaN(phoneNum)) {
+        if (isNaN(phoneNum) && phoneNum > 0) {
           setErrorText("Please enter a valid phone number");
           return;
         }
@@ -66,9 +66,9 @@ function Register({setMode}: Props) {
               });
           }
         });
-      }}><Text>Submit</Text></Pressable>
+      }}>Register</Button>
       <Text style={styles.errorText}>{errorText.length > 0 ? "Error: " + errorText : ""}</Text>
-      <Pressable onPress={() => setMode("login")}><Text>Login Instead</Text></Pressable>
+      <Button variant="outlined" onClick={() => setMode("login")}>Login Instead</Button>
     </View>
   );
 }
@@ -79,10 +79,11 @@ function Login({setMode}: Props) {
   const [errorText, setErrorText] = useState("");
 
   return (
-    <View>
-      <Text>Login</Text>
-      <TextInput onChangeText={setUsernameText} value={usernameText}></TextInput>
-      <Pressable onPress={() => {
+    <View
+      style={{gap: 2}}
+    >
+      <TextField onChange={(t) => setUsernameText(t.target.value)} variant="outlined" margin="normal" style={{minWidth: 220}} slotProps={{htmlInput: {maxLength: MAX_STRING_LENGTH}}} required value={usernameText}/>
+      <Button variant="contained" onClick={() => {
 
         // Get a user ID
         dbGetUserByUsername(usernameText)
@@ -93,9 +94,9 @@ function Login({setMode}: Props) {
           setErrorText("Unable to find user. Maybe you meant to register?");
         });
         // router.replace("/dashboard");
-      }}><Text>Submit</Text></Pressable>
+      }}>Login</Button>
       <Text style={styles.errorText}>{errorText.length > 0 ? "Error: " + errorText : ""}</Text>
-      <Pressable onPress={() => setMode("register")}><Text>Register Instead</Text></Pressable>
+      <Button variant="outlined" onClick={() => setMode("register")}>Register Instead</Button>
     </View>
   );
 }
@@ -117,7 +118,8 @@ export default function Index() {
       style={{
         flex: 1,
         justifyContent: "center",
-        alignItems: "center"
+        alignItems: "center",
+        gap: 1
       }}
     >
       <Text style={styles.cardTitle}>Welcome to The KU Language Exchange</Text>
