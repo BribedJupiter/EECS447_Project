@@ -36,10 +36,33 @@ export interface ScheduleOption {
 }
 
 export interface Meeting {
+    id: number
     date: string,
     time: string,
     location: string,
     language: string,
+}
+
+export interface DialogProps {
+    meeting_data: MeetingDetails | null,
+    user: UserData,
+    open: boolean,
+    onClose: () => void,
+}
+
+export interface MeetingDetails {
+    id: number,
+    date: string,
+    time: string,
+    location: string,
+    language: string,
+    users: MeetingDetailsUser[]
+}
+
+export interface MeetingDetailsUser {
+    name: string,
+    email: string,
+    phone: string
 }
 
 export async function getStoredUserID() {
@@ -134,6 +157,16 @@ export async function dbScheduleMeeting(user_id1: number, user_id2: number, date
 export async function dbGetMeetings(user_id: number) {
     // Get matching user data
     const res = await fetch(`${API_URL}/schedule/meetings/${user_id}`, {
+        method: "GET",
+    })
+    if (!res.ok) {
+        throw new Error(`Failed to find meetings - ${res.status}`);
+    }
+    return res.json();
+}
+
+export async function dbGetMeetingDetails(meeting_id: number) {
+    const res = await fetch(`${API_URL}/meeting/${meeting_id}`, {
         method: "GET",
     })
     if (!res.ok) {

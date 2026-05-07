@@ -1,12 +1,12 @@
-import { useEffect, useState, Fragment } from "react";
+import { useEffect, useState } from "react";
 import { Pressable, View, Text, StyleSheet, ActivityIndicator } from "react-native";
 import tinycolor from "tinycolor2";
 import { router } from "expo-router";
-import { dbGetWindows, UserData, AvailabilityWindow, Speaks, dbGetSpeaks, dbGetMeetings, Meeting } from "../utils/api"
+import { dbGetWindows, UserData, AvailabilityWindow, Speaks, dbGetSpeaks, dbGetMeetings, Meeting, DialogProps, dbGetMeetingDetails, MeetingDetails, MeetingDetailsUser } from "../utils/api"
 import dayjs from "dayjs";
 import utc from "dayjs/plugin/utc";
 import tz from "dayjs/plugin/timezone";
-import { Table, TableContainer, TableHead, TableRow, TableBody, TableCell, Button, AppBar, Toolbar } from "@mui/material";
+import { Table, TableContainer, TableHead, TableRow, TableBody, TableCell, Button, AppBar, Toolbar, Dialog, DialogTitle, Divider } from "@mui/material";
 
 // Dayjs setup
 dayjs.extend(utc); // Enable UTC extension
@@ -174,9 +174,50 @@ function AvailabilityInfo(props: Props) {
   );
 }
 
+function MeetingDetailsDialog(props: DialogProps) {
+  return (
+    <Dialog open={props.open} onClose={props.onClose}>
+      {props.meeting_data === null ? (
+        <Text style={styles.errorText}>Invalid Meeting ID. Try again</Text>
+      ) : (
+        <View
+          style={{
+            flex: 1,
+            alignItems: "center",
+            justifyContent: "center",
+            padding: 10,
+            gap: 3,
+            marginBottom: 10
+          }}
+        >
+          <DialogTitle style={styles.cardTitle}>Meeting Details</DialogTitle>
+          <Text>Date: {props.meeting_data.date}</Text>
+          <Text>Start Time: {props.meeting_data.time}</Text>
+          <Text>Location: {props.meeting_data.location}</Text>
+          <Text>Language: {props.meeting_data.language}</Text>
+          <Divider sx={{width: '100%', margin: 2}}></Divider>
+          <Text style={{fontWeight: "bold"}}>Attendees</Text>
+          {props.meeting_data.users.map((u: MeetingDetailsUser) => {
+            return (
+              <View
+                key={u.name + u.email + u.phone}
+              >
+                <Text>{u.name} | {u.email} | {u.phone}</Text>
+              </View>
+            );
+          })}
+        </View>
+      )}
+    </Dialog>
+  );
+}
+
 function UpcomingMeetings(props: Props) {
   const [upcomingMeetingData, setUpcomingMeetingData] = useState<Meeting[]>([]);
   const [fetchMeetingSuccess, setFetchMeetingSuccess] = useState<Boolean | null>(null);
+  const [openMtgDetails, setOpenMeetingDetails] = useState(false);
+  const [mtgDetails, setMtgDetails] = useState<MeetingDetails | null>(null);
+  const [isFetchingMtgDetails, setIsFetchingMtgDetails] = useState<number | null>(null);
 
   useEffect(() => {
     dbGetMeetings(props.user.id)
@@ -186,10 +227,11 @@ function UpcomingMeetings(props: Props) {
         mtgs.push({
           // We convert to UTC because we don't want dayjs applying
           // any weird timezone changes. Currently only America/Chicago is supported.
-          date: dayjs(row[0]).utc().format("YYYY-MM-DD"),
-          time: dayjs(row[1]).utc().format("HH:mm A"),
-          location: row[2],
-          language: row[3]
+          id: row[0],
+          date: dayjs(row[1]).utc().format("YYYY-MM-DD"),
+          time: dayjs(row[2]).utc().format("HH:mm A"),
+          location: row[3],
+          language: row[4]
         })
       }
       setUpcomingMeetingData(mtgs); 
@@ -204,6 +246,7 @@ function UpcomingMeetings(props: Props) {
 
   return (
     <View style={styles.upcomingMeetingWindow}>
+      <MeetingDetailsDialog meeting_data={mtgDetails} user={props.user} open={openMtgDetails} onClose={() => {setIsFetchingMtgDetails(null); setOpenMeetingDetails(false)}}/>
       <Text style={styles.cardTitle}>Upcoming Meetings</Text>
       {fetchMeetingSuccess ? (
         <View style={{alignItems: "center", justifyContent: "center", flex: 1}}>
@@ -215,6 +258,7 @@ function UpcomingMeetings(props: Props) {
                   <TableCell align="center">Time</TableCell>
                   <TableCell align="center">Location</TableCell>
                   <TableCell align="center">Language</TableCell>
+                  <TableCell align="center">Details</TableCell>
                 </TableRow>
               </TableHead>
               <TableBody>
@@ -227,6 +271,36 @@ function UpcomingMeetings(props: Props) {
                       <TableCell align="center">{mtg.time}</TableCell>
                       <TableCell align="center">{mtg.location}</TableCell>
                       <TableCell align="center">{mtg.language}</TableCell>
+                      <TableCell align="center">
+                        {isFetchingMtgDetails == mtg.id ? (
+                          <ActivityIndicator />
+                        ) : (
+                          <Button onClick={() => {
+                            setIsFetchingMtgDetails(mtg.id);
+                            dbGetMeetingDetails(mtg.id)
+                            .then((data) => {
+                              // We know there will only be one row of data
+                              const mds: MeetingDetails = {
+                                id: data[0],
+                                // Same UTC trick to keep times in central time
+                                date: dayjs(data[1]).utc().format('YYYY-MM-DD'),
+                                time: dayjs(data[2]).utc().format('HH:mm a'),
+                                location: data[3],
+                                language: data[4],
+                                users: data[5]
+                              };
+                              setMtgDetails(mds); 
+                              setOpenMeetingDetails(true)
+                            })
+                            .catch((e) => {
+                              console.error("Could not fetch meeting details.", e);
+                              setIsFetchingMtgDetails(null)
+                            });
+                            }}
+                            >See Details
+                          </Button>
+                        )}                                     
+                      </TableCell>
                     </TableRow>
                   );
                 })}

@@ -230,7 +230,7 @@ export default function MeetingScheduler() {
                                 <TableCell align="center">{!s.start_time ? "" : s.start_time.format('h:mm A').toString()}</TableCell>
                                 <TableCell align="center">{!s.end_time ? "" : s.end_time.format('h:mm A').toString()}</TableCell>
                                 <TableCell align="center">
-                                    <Button variant="contained" onClick={() => {
+                                    <Button disabled={!s.date || !s.start_time || !s.end_time} variant="contained" onClick={() => {
                                         // There are two types of meetings we can schedule - with a time and without
                                         if (!s.requester_st || !s.requester_et || !s.id) {
                                             // We only want to setup conversation partners

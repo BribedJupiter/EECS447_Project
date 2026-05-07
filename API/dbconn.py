@@ -207,7 +207,7 @@ def db_get_meetings(user_id):
 def db_get_meetings_data(conn, user_id):
     """Get all meetings for a particular user by their user_id."""
     cur = conn.cursor()
-    cur.execute("SELECT m.date, m.time, m.location, m.language_name " \
+    cur.execute("SELECT m.id, m.date, m.time, m.location, m.language_name " \
                 "FROM Meeting m " \
                 "INNER JOIN Attends a ON a.meeting_id=m.id " \
                 "WHERE a.user_id=%s;"
@@ -215,6 +215,31 @@ def db_get_meetings_data(conn, user_id):
     result = cur.fetchall()
     cur.close()
     return result
+
+def db_get_meeting_details(meeting_id):
+    return db_run_query(db_get_meeting_details_data, meeting_id)
+
+def db_get_meeting_details_data(conn, meeting_id):
+    """Get all data relevant to a meeting from both the Attends and Meeting tables."""
+    cur = conn.cursor()
+    cur.execute("SELECT m.id, m.date, m.time, m.location, m.language_name, a.user_id, u.name, u.email, u.phone " \
+                "FROM Meeting m " \
+                "INNER JOIN Attends a ON a.meeting_id=m.id " \
+                "INNER JOIN User u ON u.id=a.user_id " \
+                "WHERE m.id=%s;" \
+                , (meeting_id,))
+    result = cur.fetchall()
+    cur.close()
+
+    attendees = []
+    for row in result:
+        attendees.append({
+            "name":row[6],
+            "email":row[7],
+            "phone":row[8]
+        })
+    meeting_info = (result[0][0], result[0][1], result[0][2], result[0][3], result[0][4], attendees)
+    return meeting_info
 
 #####################################################
 #       Availability Window Functions               #
