@@ -140,6 +140,7 @@ export default function MeetingScheduler() {
                         matchAvailability == false ? setMatchAvailability(true) : setMatchAvailability(false);
                     }}/>} label="Match availability" />
             </FormControl>
+            <Text>Note that meetings will be scheduled for the minimum overlapping time.</Text>
             <View style={{flexDirection: "row"}}>
                 <Button onClick={() => router.replace("/dashboard")}>Back</Button>
                 <Button onClick={() => {
@@ -149,7 +150,9 @@ export default function MeetingScheduler() {
                         return;
                     }
                     setHasSearched(true);
-                    
+                    setFoundMeetingOptions([]); // reset state
+                    setSearchComplete(false);
+
                     // Make API call
                     getStoredUserID()
                     .then((user_id) => {
@@ -212,8 +215,10 @@ export default function MeetingScheduler() {
                         <TableCell align="center">Language</TableCell>
                         <TableCell align="center">Skill Level</TableCell>
                         <TableCell align="center">Date</TableCell>
-                        <TableCell align="center">Start Time</TableCell>
-                        <TableCell align="center">End Time</TableCell>
+                        <TableCell align="center">Meeting Start Time</TableCell>
+                        <TableCell align="center">Meeting End Time</TableCell>
+                        <TableCell align="center">Your Availability Starts</TableCell>
+                        <TableCell align="center">Your Availability Ends</TableCell>
                         <TableCell align="center">Select</TableCell>
                         </TableRow>
                     </TableHead>
@@ -229,6 +234,8 @@ export default function MeetingScheduler() {
                                 <TableCell align="center">{!s.date ? "" : s.date.format('YYYY-MM-DD').toString()}</TableCell>
                                 <TableCell align="center">{!s.start_time ? "" : s.start_time.format('h:mm A').toString()}</TableCell>
                                 <TableCell align="center">{!s.end_time ? "" : s.end_time.format('h:mm A').toString()}</TableCell>
+                                <TableCell align="center">{!s.requester_st ? "" : s.requester_st.format('h:mm A').toString()}</TableCell>
+                                <TableCell align="center">{!s.requester_et ? "" : s.requester_et.format('h:mm A').toString()}</TableCell>
                                 <TableCell align="center">
                                     <Button disabled={!s.date || !s.start_time || !s.end_time} variant="contained" onClick={() => {
                                         // There are two types of meetings we can schedule - with a time and without
@@ -263,24 +270,13 @@ export default function MeetingScheduler() {
                                                 if (!user_id) {
                                                     setErrorText("Try logging in again.");
                                                 } else {
-                                                    dbResizeWindow(user_id, dateStr, start, end).catch((e) => { 
-                                                        setErrorText("Unable to resize window.");
-                                                        return;
-                                                    }).then(() => {
-                                                        // We know id will be here since we would've returned earlier
-                                                        dbResizeWindow(s.id!, dateStr, start, end).catch((e) => { 
-                                                            setErrorText("Unable to resize window.");
-                                                            return;
-                                                        }).then(() => {
-                                                            // Now, we add to the Meeting table
-                                                            dbScheduleMeeting(user_id, s.id!, dateStr, start, meetingLocation, language)
-                                                            .then((res) => {
-                                                                // Finally, we redirect the user back to the dashboard
-                                                                router.replace("/dashboard");
-                                                            }).catch((e) => {
-                                                                setErrorText("Failed to schedule meeting. Retry?")
-                                                            })
-                                                        });
+                                                    // Now, we attempt to schedule the meeting
+                                                    dbScheduleMeeting(user_id, s.id!, dateStr, start, end, meetingLocation, language)
+                                                    .then((res) => {
+                                                        // On success, we redirect the user back to the dashboard
+                                                        router.replace("/dashboard");
+                                                    }).catch((e) => {
+                                                        setErrorText("Failed to schedule meeting.");
                                                     });
                                                 }
                                             }

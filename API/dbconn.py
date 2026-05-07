@@ -161,14 +161,19 @@ def db_get_matching_users_data(conn, user_id, lang, low_skill, high_skill, useAv
     finally:
         cur.close()
 
-def db_schedule_meeting(user_id1, user_id2, date, start_time, location, language_name):
-    return db_run_query(db_schedule_meeting_data, user_id1, user_id2, date, start_time, location, language_name)
+def db_schedule_meeting(user_id1, user_id2, date, start_time, end_time, location, language_name):
+    return db_run_query(db_schedule_meeting_data, user_id1, user_id2, date, start_time, end_time, location, language_name)
 
-def db_schedule_meeting_data(conn, user_id1, user_id2, date, start_time, location, language_name):
+def db_schedule_meeting_data(conn, user_id1, user_id2, date, start_time, end_time, location, language_name):
     """A wrapper function for meeting scheduling so that we can wrap it all in a single transaction"""
     cur = conn.cursor()
     try:
         cur.execute("START TRANSACTION;")
+        resize_result1 = db_resize_window_subsection_data(conn, user_id1, date, start_time, end_time, False)
+        resize_result2 = db_resize_window_subsection_data(conn, user_id1, date, start_time, end_time, False)
+        # If we fail to resize the window for either user, raise an error and rollback the transaction
+        if not resize_result1 or not resize_result2:
+            raise RuntimeError("Could not resize availability windows", resize_result1, resize_result2)
         mtg_id = db_set_meeting_data(cur, date, start_time, location, language_name)
         db_set_attends_data(cur, user_id1, mtg_id)
         db_set_attends_data(cur, user_id2, mtg_id)
@@ -268,24 +273,26 @@ def db_create_window_data(conn, user_id, date, start_time, end_time):
         cur.close()
 
 def db_resize_window_subsection(user_id, date, new_start_time, new_end_time):
-    return db_run_query(db_resize_window_subsection_data, user_id, date, new_start_time, new_end_time)
+    return db_run_query(db_resize_window_subsection_data, user_id, date, new_start_time, new_end_time, True)
 
-def db_resize_window_subsection_data(conn, user_id, date, new_start_time, new_end_time):
+def db_resize_window_subsection_data(conn, user_id, date, new_start_time, new_end_time, manage_transaction):
     """Delete from an availability window subsection. That is, consider the block from the start_time to the end_time invalid
     but leave the rest of the block if it exists."""
     cur = conn.cursor()
     try:
-        cur.execute("START TRANSACTION;")
+        if manage_transaction: # use this flag when we have to manage the transaction on our own. Generally, this is part of a larger process
+            cur.execute("START TRANSACTION;")
         # Get the wrapper start and end times if they exist
         cur.execute("SELECT user_id, date, start_time, end_time " \
                     "FROM Availability " \
                     "WHERE user_id=%s " \
                     "AND date=%s " \
-                    "AND (start_time>=%s " \
-                    "OR end_time=%s);"
-                    , (user_id, date, new_start_time, new_end_time))
+                    "AND start_time<=%s " \
+                    "AND end_time>=%s;"
+                    , (user_id, date, new_end_time, new_start_time))
         overlapping_times = cur.fetchall()
         for ot in overlapping_times:
+            # print("Date: " + ot[1].strftime("%Y-%m-%dT%H:%M"), " OST: " + ot[2].strftime("%Y-%m-%dT%H:%M"), " OET: " + ot[3].strftime("%Y-%m-%dT%H:%M"), " NST: " + new_start_time, " NET: " + new_end_time)
             # OT will always be a tuple of 4 elements. Each is marked as a PRIMARY KEY and thus also NOT NULL
             # For each overlapping time, we want to delete it, then add the difference between it and the new time
             cur.execute(
@@ -302,22 +309,31 @@ def db_resize_window_subsection_data(conn, user_id, date, new_start_time, new_en
             net_obj = datetime.datetime.strptime(new_end_time, "%Y-%m-%dT%H:%M")
             if date_obj.date() != ot[1]:
                 raise RuntimeError("Found date did not match provided data.")
+            # For the following two INSERT queries, it's important to note that it is very 
+            # possible that a duplicate availability window gets created. However, since all
+            # four of the columns are part of the PRIMARY KEY, we can just discard these entries.
+            # Hence we use INSERT IGNORE INTO to turn duplicate errors into warnings and skip
+            # failures. There is a possiblity that this could make other errors harder to detect,
+            # but I don't think this is really an issue since user input is limited to a datetime
+            # format by the application.
             if ot[2] < nst_obj:
                 # We need to add back the time from the old start to the new meeting start
-                cur.execute("INSERT INTO Availability (user_id, date, start_time, end_time) " \
+                cur.execute("INSERT IGNORE INTO Availability (user_id, date, start_time, end_time) " \
                             "VALUES (%s, %s, %s, %s)",
                             (ot[0], ot[1], ot[2], nst_obj.strftime("%Y-%m-%dT%H:%M")))
             if ot[3] > net_obj:
                 # We need to add back the time from the new meeting end to the old meeting end
-                cur.execute("INSERT INTO Availability (user_id, date, start_time, end_time) " \
+                cur.execute("INSERT IGNORE INTO Availability (user_id, date, start_time, end_time) " \
                             "VALUES (%s, %s, %s, %s)",
                             (ot[0], ot[1], net_obj.strftime("%Y-%m-%dT%H:%M"), ot[3]))
 
         # Finally our transaction and return
-        cur.execute("COMMIT;")
+        if manage_transaction:
+            cur.execute("COMMIT;")
         return True
     except Exception as e:
-        cur.execute("ROLLBACK;")
+        if manage_transaction:
+            cur.execute("ROLLBACK;")
         print("DELETE Error", e)
         return False
     finally:

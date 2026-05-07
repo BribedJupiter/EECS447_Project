@@ -135,7 +135,7 @@ export async function dbFindUsers(user_id: number, lang: string, low_skill: numb
     return res.json();
 }
 
-export async function dbScheduleMeeting(user_id1: number, user_id2: number, date: string, start_time: string, location: string, language: string) {
+export async function dbScheduleMeeting(user_id1: number, user_id2: number, date: string, start_time: string, end_time: string, location: string, language: string) {
     const res = await fetch(`${API_URL}/schedule/${user_id1}/${user_id2}`, {
         method: "PUT",
         headers: {
@@ -144,6 +144,7 @@ export async function dbScheduleMeeting(user_id1: number, user_id2: number, date
         body: JSON.stringify({
             date: date,
             start_time: start_time,
+            end_time: end_time,
             location: location,
             language: language
         })

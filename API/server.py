@@ -120,9 +120,9 @@ def schedule_meeting(user_id1, user_id2):
     try:
         data = request.get_json() or {}
         # Add meeting to meeting, get back meeting_id
-        result = db_schedule_meeting(user_id1, user_id2, data.get("date"), data.get("start_time"), data.get("location"), data.get("language"))
+        result = db_schedule_meeting(user_id1, user_id2, data.get("date"), data.get("start_time"), data.get("end_time"), data.get("location"), data.get("language"))
         if result == False:
-            return {"error": "failed to create meeting"}, 500
+            return {"error": "failed to schedule meeting"}, 500
         return jsonify({
             "status": "success"
         }), 200
