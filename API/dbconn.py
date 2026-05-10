@@ -461,7 +461,7 @@ def db_setup_tables(conn):
             "username varchar(50) NOT NULL UNIQUE," \
             "name varchar(50)," \
             "email varchar(50)," \
-            "phone int" \
+            "phone BIGINT" \
         ");"
     )
 
