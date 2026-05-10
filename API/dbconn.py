@@ -170,7 +170,7 @@ def db_schedule_meeting_data(conn, user_id1, user_id2, date, start_time, end_tim
     try:
         cur.execute("START TRANSACTION;")
         resize_result1 = db_resize_window_subsection_data(conn, user_id1, date, start_time, end_time, False)
-        resize_result2 = db_resize_window_subsection_data(conn, user_id1, date, start_time, end_time, False)
+        resize_result2 = db_resize_window_subsection_data(conn, user_id2, date, start_time, end_time, False)
         # If we fail to resize the window for either user, raise an error and rollback the transaction
         if not resize_result1 or not resize_result2:
             raise RuntimeError("Could not resize availability windows", resize_result1, resize_result2)
