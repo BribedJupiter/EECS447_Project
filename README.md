@@ -14,3 +14,6 @@ followed by `python server.py`. Don't forget to point the client to the server b
 
 The third part is the AWS Database that the server communicates with. It's important to note that after the Spring 2026 semester ends, 
 both the database and the remote server will be shut down. 
+
+If you are interested in running this yourself and would like the environment variables to access the database, send me an email and I can provide them. 
+Thanks!
