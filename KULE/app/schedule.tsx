@@ -20,7 +20,7 @@ dayjs.extend(tz); // Enable timezone extension
 export default function MeetingScheduler() {
     const [matchAvailability, setMatchAvailability] = useState(false);
     const [skillLow, setSkillLow] = useState(0);
-    const [skillHigh, setSkillHigh] = useState(0);
+    const [skillHigh, setSkillHigh] = useState(10);
     const [language, setLanguage] = useState("English");
     const [langList, setLangList] = useState([]);
     const [errorText, setErrorText] = useState("");
@@ -140,7 +140,7 @@ export default function MeetingScheduler() {
                         matchAvailability == false ? setMatchAvailability(true) : setMatchAvailability(false);
                     }}/>} label="Match availability" />
             </FormControl>
-            <Text>Note that meetings will be scheduled for the minimum overlapping time.</Text>
+            <Text>Note: Meetings will be scheduled to start at the beginning of the overlapping availability window.</Text>
             <View style={{flexDirection: "row"}}>
                 <Button onClick={() => router.replace("/dashboard")}>Back</Button>
                 <Button onClick={() => {
@@ -215,8 +215,8 @@ export default function MeetingScheduler() {
                         <TableCell align="center">Language</TableCell>
                         <TableCell align="center">Skill Level</TableCell>
                         <TableCell align="center">Date</TableCell>
-                        <TableCell align="center">Meeting Start Time</TableCell>
-                        <TableCell align="center">Meeting End Time</TableCell>
+                        <TableCell align="center">Their Availability Starts</TableCell>
+                        <TableCell align="center">Their Availability Ends</TableCell>
                         <TableCell align="center">Your Availability Starts</TableCell>
                         <TableCell align="center">Your Availability Ends</TableCell>
                         <TableCell align="center">Select</TableCell>

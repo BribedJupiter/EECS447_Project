@@ -229,7 +229,7 @@ function UpcomingMeetings(props: Props) {
           // any weird timezone changes. Currently only America/Chicago is supported.
           id: row[0],
           date: dayjs(row[1]).utc().format("YYYY-MM-DD"),
-          time: dayjs(row[2]).utc().format("HH:mm A"),
+          time: dayjs(row[2]).utc().format("h:mm A"),
           location: row[3],
           language: row[4]
         })
@@ -284,7 +284,7 @@ function UpcomingMeetings(props: Props) {
                                 id: data[0],
                                 // Same UTC trick to keep times in central time
                                 date: dayjs(data[1]).utc().format('YYYY-MM-DD'),
-                                time: dayjs(data[2]).utc().format('HH:mm a'),
+                                time: dayjs(data[2]).utc().format('h:mm A'),
                                 location: data[3],
                                 language: data[4],
                                 users: data[5]
